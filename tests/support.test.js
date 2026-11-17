@@ -1,6 +1,5 @@
 import {expect} from 'chai';
 import {readFile} from 'node:fs/promises';
-import {once} from 'node:events';
 import path from 'node:path';
 import {api,errorResponse} from './helpers.js';
 import logger from '../src/config/logger.js';
@@ -12,6 +11,6 @@ describe('Soporte, documentación y errores',()=>{
  it('health check no expone secretos',async()=>{const r=await api.get('/api/health');expect(r.status).to.equal(200);expect(r.body).to.have.all.keys('status','timestamp');expect(r.body.status).to.equal('ok');expect(Number.isNaN(Date.parse(r.body.timestamp))).to.equal(false);});
  it('unifica 404 para rutas inexistentes y métodos no disponibles',async()=>{errorResponse(await api.get('/api/no-existe'),404,'ROUTE_NOT_FOUND');errorResponse(await api.post('/api/logger/test').send({}),404,'ROUTE_NOT_FOUND');errorResponse(await api.get('/api/documentacion-inexistente'),404,'ROUTE_NOT_FOUND');});
  it('rechaza JSON inválido y payload excesivo',async()=>{errorResponse(await api.post('/api/users').set('Content-Type','application/json').send('{'),400,'INVALID_JSON');errorResponse(await api.post('/api/users').send({firstName:'x'.repeat(110000)}),413,'PAYLOAD_TOO_LARGE');});
- it('no expone detalles de errores inesperados',()=>{const result=normalizeError(new Error('mongodb://secret:password@private'));expect(result.statusCode).to.equal(500);expect(result.code).to.equal('INTERNAL_ERROR');expect(result.message).not.to.include('password');});
+ it('no expone detalles de errores inesperados',()=>{const result=normalizeError(new Error('DETALLE_INTERNO_NO_PUBLICAR'));expect(result.statusCode).to.equal(500);expect(result.code).to.equal('INTERNAL_ERROR');expect(result.message).not.to.include('DETALLE_INTERNO_NO_PUBLICAR');});
  it('rechaza configuración crítica ausente o inválida',()=>{const valid={PORT:'8080',NODE_ENV:'test',MONGODB_URI:'mongodb://127.0.0.1:27017/shipnow_test'};for(const key of ['PORT','NODE_ENV','MONGODB_URI']) {const invalid={...valid};delete invalid[key];expect(()=>validateConfig(invalid)).to.throw(key);}expect(()=>validateConfig({...valid,PORT:'bad'})).to.throw('PORT');expect(()=>validateConfig({...valid,NODE_ENV:'bad'})).to.throw('NODE_ENV');expect(()=>validateConfig({...valid,MONGODB_URI:'https://bad'})).to.throw('MONGODB_URI');});
 });
