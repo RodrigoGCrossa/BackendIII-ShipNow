@@ -1,0 +1,10 @@
+import {expect} from 'chai';
+import {api,missing,errorResponse,createUser} from './helpers.js';
+describe('Users',()=>{
+ it('crea, lista y consulta usuarios sin contraseñas',async()=>{const user=await createUser();expect(user).not.to.have.property('password');const list=await api.get('/api/users');expect(list.status).to.equal(200);expect(list.body.payload).to.have.length(1);expect(list.body.payload[0]).to.include({email:user.email,role:'customer'});const found=await api.get(`/api/users/${user._id}`);expect(found.body.payload._id).to.equal(user._id);expect(found.body.payload).not.to.have.property('password');});
+ it('actualiza y elimina',async()=>{const user=await createUser();const updated=await api.put(`/api/users/${user._id}`).send({firstName:'Luis'});expect(updated.status).to.equal(200);expect(updated.body.payload.firstName).to.equal('Luis');expect((await api.delete(`/api/users/${user._id}`)).status).to.equal(200);errorResponse(await api.get(`/api/users/${user._id}`),404,'USER_NOT_FOUND');});
+ it('rechaza datos incompletos y emails inválidos',async()=>{errorResponse(await api.post('/api/users').send({}),400,'INVALID_DATA');errorResponse(await api.post('/api/users').send({firstName:'A',lastName:'B',email:'bad',password:'123456'}),400,'INVALID_DATA');});
+ it('bloquea creación y escalamiento a admin',async()=>{errorResponse(await api.post('/api/users').send({firstName:'A',lastName:'B',email:'a@example.test',password:'123456',role:'admin'}),403,'FORBIDDEN');const user=await createUser();errorResponse(await api.put(`/api/users/${user._id}`).send({role:'admin'}),403,'FORBIDDEN');});
+ it('rechaza duplicados',async()=>{const user=await createUser();errorResponse(await api.post('/api/users').send({...user,password:'prueba123'}),409,'DUPLICATE');});
+ it('valida ID, inexistentes y paginación',async()=>{errorResponse(await api.get('/api/users/no-id'),400,'INVALID_ID');errorResponse(await api.get(`/api/users/${missing}`),404,'USER_NOT_FOUND');errorResponse(await api.get('/api/users?limit=101'),400,'INVALID_DATA');});
+});

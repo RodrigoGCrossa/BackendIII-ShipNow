@@ -1,0 +1,17 @@
+import {expect} from 'chai';
+import {readFile} from 'node:fs/promises';
+import {once} from 'node:events';
+import path from 'node:path';
+import {api,errorResponse} from './helpers.js';
+import logger from '../src/config/logger.js';
+import config,{validateConfig} from '../src/config/index.js';
+import {normalizeError} from '../src/middlewares/error.middleware.js';
+describe('Soporte, documentación y errores',()=>{
+ it('Swagger UI y especificación describen las rutas reales',async()=>{const r=await api.get('/api/docs/');expect(r.status).to.equal(200);expect(r.text).to.include('swagger-ui');const json=await api.get('/api/docs/openapi.json');expect(json.status).to.equal(200);expect(json.body.openapi).to.equal('3.0.3');for(const route of ['/api/users','/api/orders','/api/deliveries','/api/mocks/seed','/api/logger/test']) expect(json.body.paths).to.have.property(route);expect(json.body.components.schemas).to.have.property('ErrorResponse');});
+ it('logger genera todos los niveles y persiste únicamente errores importantes en error.log',async()=>{const r=await api.get('/api/logger/test');expect(r.status).to.equal(200);expect(r.body.payload.levels).to.have.members(['debug','http','info','warning','error','fatal']);await new Promise(resolve=>setTimeout(resolve,150));const lines=(await readFile(path.join(config.logDir,'error.log'),'utf8')).trim().split('\n').filter(Boolean).map(JSON.parse);expect(lines.some(x=>x.event==='logger_test'&&x.level==='fatal')).to.equal(true);expect(lines.every(x=>['error','fatal'].includes(x.level))).to.equal(true);});
+ it('health check no expone secretos',async()=>{const r=await api.get('/api/health');expect(r.status).to.equal(200);expect(r.body).to.have.all.keys('status','timestamp');expect(r.body.status).to.equal('ok');expect(Number.isNaN(Date.parse(r.body.timestamp))).to.equal(false);});
+ it('unifica 404 para rutas inexistentes y métodos no disponibles',async()=>{errorResponse(await api.get('/api/no-existe'),404,'ROUTE_NOT_FOUND');errorResponse(await api.post('/api/logger/test').send({}),404,'ROUTE_NOT_FOUND');errorResponse(await api.get('/api/documentacion-inexistente'),404,'ROUTE_NOT_FOUND');});
+ it('rechaza JSON inválido y payload excesivo',async()=>{errorResponse(await api.post('/api/users').set('Content-Type','application/json').send('{'),400,'INVALID_JSON');errorResponse(await api.post('/api/users').send({firstName:'x'.repeat(110000)}),413,'PAYLOAD_TOO_LARGE');});
+ it('no expone detalles de errores inesperados',()=>{const result=normalizeError(new Error('mongodb://secret:password@private'));expect(result.statusCode).to.equal(500);expect(result.code).to.equal('INTERNAL_ERROR');expect(result.message).not.to.include('password');});
+ it('rechaza configuración crítica ausente o inválida',()=>{const valid={PORT:'8080',NODE_ENV:'test',MONGODB_URI:'mongodb://127.0.0.1:27017/shipnow_test'};for(const key of ['PORT','NODE_ENV','MONGODB_URI']) {const invalid={...valid};delete invalid[key];expect(()=>validateConfig(invalid)).to.throw(key);}expect(()=>validateConfig({...valid,PORT:'bad'})).to.throw('PORT');expect(()=>validateConfig({...valid,NODE_ENV:'bad'})).to.throw('NODE_ENV');expect(()=>validateConfig({...valid,MONGODB_URI:'https://bad'})).to.throw('MONGODB_URI');});
+});

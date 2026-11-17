@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-dotenv.config({ path: process.env.ENV_FILE || '.env', quiet: true });
+dotenv.config({ path: process.env.ENV_FILE || (process.env.NODE_ENV==='test'?'.env.test':'.env'), quiet: true });
 export function validateConfig(env) {
   for (const key of ['PORT', 'MONGODB_URI', 'NODE_ENV']) {
     if (!env[key]?.trim()) throw new Error(`Falta configurar la variable de entorno: ${key}`);
@@ -10,7 +10,7 @@ export function validateConfig(env) {
   if (!/^mongodb(\+srv)?:\/\//.test(env.MONGODB_URI)) throw new Error('MONGODB_URI debe ser una URI de MongoDB');
   const logLevel=env.LOG_LEVEL || (env.NODE_ENV==='development'?'debug':'info');
   if(!['fatal','error','warning','info','http','debug'].includes(logLevel)) throw new Error('LOG_LEVEL inválido');
-  return Object.freeze({ port, mongoUri: env.MONGODB_URI, nodeEnv: env.NODE_ENV, logLevel, logDir: env.LOG_DIR || 'logs' });
+  return Object.freeze({ port, mongoUri: env.MONGODB_URI, nodeEnv: env.NODE_ENV, logLevel, logDir: env.LOG_DIR || 'logs', mongoBinary: env.MONGODB_BINARY || undefined });
 }
 export const config = validateConfig(process.env);
 export default config;

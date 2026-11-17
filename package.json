@@ -1,8 +1,30 @@
 {
-  "name": "shipnow-backend-iii", "version": "1.0.0", "private": true,
-  "description": "API de logística ShipNow — Backend III", "type": "module",
-  "engines": {"node": ">=20"},
-  "scripts": {"start": "node src/server.js", "dev": "node --watch src/server.js", "test": "mocha --timeout 20000 --import=./tests/setup.js 'tests/**/*.test.js'", "check": "node scripts/check.js"},
-  "dependencies": {"dotenv": "^16.6.1", "express": "^5.3.0", "mongoose": "^8.24.8", "multer": "^2.0.2", "winston": "^3.17.0", "swagger-ui-express": "^5.0.1"},
-  "devDependencies": {"mocha": "^11.7.0", "chai": "^5.2.0", "supertest": "^7.3.1", "mongodb-memory-server-core": "^10.4.3"}
+  "name": "shipnow-backend-iii",
+  "version": "1.0.0",
+  "private": true,
+  "description": "API de logística ShipNow — Backend III",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "NODE_ENV=test mocha --timeout 20000 --require ./tests/setup.js 'tests/**/*.test.js'",
+    "check": "node scripts/check.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.6.1",
+    "express": "^5.3.0",
+    "mongoose": "^8.24.8",
+    "multer": "^2.0.2",
+    "winston": "^3.17.0",
+    "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "mocha": "^11.7.0",
+    "chai": "^5.2.0",
+    "supertest": "^7.3.1",
+    "mongodb-memory-server-core": "^10.4.3"
+  }
 }

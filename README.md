@@ -59,3 +59,11 @@ Para comprobarlo, ejecutá el endpoint y revisá ambos archivos. Los errores esp
 Documentación interactiva en `http://localhost:8080/api/docs/` (ajustá el puerto según PORT). Especificación JSON: `/api/docs/openapi.json`. Incluye Users, Products, Orders, Deliveries, Mocks, Logger y Health, con schemas reutilizables, parámetros, bodies, respuestas y errores. Swagger está separado de las rutas en `src/config/swagger.js` y `src/docs/openapi.json`.
 
 Para probar el flujo, creá un cliente y un repartidor con `/api/users`, un pedido con el ID del cliente y una entrega con los IDs del pedido y repartidor. Los IDs de los previews de mocks no están guardados: usá seed o POST de negocio antes de referenciarlos en la API real. No se documenta autenticación porque no está implementada.
+
+## Testing funcional
+
+Herramientas: Mocha, Chai y Supertest. Ejecutá `cp .env.test.example .env.test` y `npm test`. La suite inicia un proceso MongoDB real, temporal e independiente con `mongodb-memory-server-core`; guarda datos en disco temporal y elimina la base/proceso al terminar. No usa una base de desarrollo ni una simulación de persistencia. La primera ejecución necesita descargar MongoDB 7.0.24; alternativamente configurá MONGODB_BINARY con la ruta de un mongod local compatible.
+
+Variables propias: PORT=8081, NODE_ENV=test, MONGODB_URI de ejemplo para validar configuración, LOG_LEVEL y LOG_DIR; el runner conecta exclusivamente con la URI del MongoDB temporal. El script fija NODE_ENV=test. No se leen datos cargados manualmente. Hooks limpian colecciones antes de cada test y eliminan la base al finalizar, con comprobación de nombre aleatorio propio de la suite. Los tests se agrupan en `tests/` por recurso.
+
+Cubre usuarios, productos, pedidos, entregas, transiciones, mocks (preview/seed), fallos de persistencia simulados, logger, Swagger, health check, configuración y errores de HTTP. Se verifican status, body, códigos, mensajes y efectos persistidos. La prueba de fallo del repositorio usa un sustituto explícito; las pruebas HTTP de seed y negocio utilizan MongoDB real. Para comprobar repetibilidad: `npm test && npm test`.
