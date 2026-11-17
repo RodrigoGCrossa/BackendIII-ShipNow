@@ -1,5 +1,6 @@
 import {randomBytes,randomUUID} from 'node:crypto';
 import { USER_ROLES, ORDER_STATUS, DELIVERY_STATUS, ORDER_PRIORITY } from '../constants/index.js';
+import AppError from '../errors/AppError.js';
 import {fail,objectBody} from '../utils/validation.js';
 import {hashPassword} from './user.service.js';
 import MockRepository from '../repositories/mock.repository.js';
@@ -29,7 +30,7 @@ export default class MockService {
   objectBody(body);const resource=body.resource??'users';const bundle=await this.generate(resource,qty);
   const password=await hashPassword(randomUUID());
   const users=[...bundle.users,...bundle.drivers].map(user=>({...user,password}));
-  await this.repository.insertBundle({...bundle,users});
+  try {await this.repository.insertBundle({...bundle,users});} catch(cause) {throw new AppError('MOCK_PERSISTENCE_ERROR',undefined,{cause});}
   return {insertados:resource==='users'?users.length:bundle[resource]?.length??bundle.orders.length,coleccion:resource==='users'?'usuarios':resource,totales:{usuarios:users.length,pedidos:bundle.orders.length,entregas:bundle.deliveries.length}};
  }
 }

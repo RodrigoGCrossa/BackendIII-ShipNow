@@ -1,6 +1,5 @@
-export function fail(code, message, statusCode = 400) {
-  const error = new Error(message); error.code = code; error.statusCode = statusCode; throw error;
-}
+import AppError from '../errors/AppError.js';
+export function fail(code,message) {throw new AppError(code,message);}
 export function id(value) { if (typeof value !== 'string' || !/^[a-f0-9]{24}$/i.test(value)) fail('INVALID_ID', 'El ID debe tener 24 caracteres hexadecimales'); return value; }
 export function requiredText(value, field) { if (typeof value !== 'string' || !value.trim()) fail('INVALID_DATA', `El campo ${field} es obligatorio`); return value.trim(); }
 export function enumValue(value, values, field) { if (!Object.values(values).includes(value)) fail('INVALID_STATE', `Valor inválido para ${field}`); return value; }

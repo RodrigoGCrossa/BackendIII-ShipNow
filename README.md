@@ -39,3 +39,9 @@ GET `/api/mocks/users?qty=2` y `/api/mocks/drivers?qty=2` devuelven arrays sin g
 POST `/api/mocks/seed?qty=10`, con body JSON `{ "resource":"users" }`, guarda 10 usuarios y devuelve `insertados`, `coleccion` y los conteos por entidad. `resource` puede ser users, drivers, orders, deliveries o all; por defecto users. Orders genera también clientes; deliveries/all genera clientes, repartidores, pedidos y entregas vinculados. `qty` va de 1 a 100; se rechazan negativos, fracciones y cantidades excesivas. Las contraseñas de carga se generan y se guardan con hash; los previews no contienen contraseñas.
 
 La carga usa MongoDB real y compensación de los registros propios ante fallos de inserción. No es una transacción entre colecciones: ante una caída de MongoDB durante la compensación, se debe revisar la carga. Usá una base descartable para seeds.
+
+## Errores centralizados
+
+Services lanzan `AppError`; controllers llaman `next(error)` y el middleware global es el único que construye errores HTTP. `src/errors/catalog.js` contiene códigos, mensajes y status. Formato: `{ "status":"error", "error":{ "code":"ORDER_NOT_FOUND", "message":"Pedido no encontrado" } }`.
+
+Probá `GET /api/orders/000000000000000000000000` (404), `GET /api/mocks/users?qty=-1` (400, INVALID_MOCK_QUANTITY), un ID mal formado (400, INVALID_ID), un estado desconocido (400, INVALID_STATE), JSON incorrecto (400, INVALID_JSON) y una ruta inexistente (404, ROUTE_NOT_FOUND). Duplicados devuelven 409; fallos de seed, 503. Los errores inesperados responden 500 sin exponer stacks ni detalles internos.
