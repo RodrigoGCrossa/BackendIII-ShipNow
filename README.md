@@ -53,3 +53,9 @@ Winston se configura una sola vez en `src/config/logger.js`. Niveles, de mayor a
 `logs/error.log` recibe únicamente error y fatal; `logs/combined.log` registra los eventos desde LOG_LEVEL. Rotación por tamaño: 1 MiB para errores, 5 MiB para combined, máximo 5 archivos por transporte. Desarrollo usa consola y debug por defecto; test/producción solo archivos e info por defecto. LOG_DIR permite cambiar el destino. Los eventos contienen timestamp, nivel, mensaje y metadatos; no se registran bodies, contraseñas ni URIs. Los logs están ignorados en Git.
 
 Para comprobarlo, ejecutá el endpoint y revisá ambos archivos. Los errores esperados se registran como warning y los inesperados como error; la conexión inicial fallida usa fatal. La configuración inválida se rechaza antes de crear la aplicación y el logger.
+
+## Swagger / OpenAPI
+
+Documentación interactiva en `http://localhost:8080/api/docs/` (ajustá el puerto según PORT). Especificación JSON: `/api/docs/openapi.json`. Incluye Users, Products, Orders, Deliveries, Mocks, Logger y Health, con schemas reutilizables, parámetros, bodies, respuestas y errores. Swagger está separado de las rutas en `src/config/swagger.js` y `src/docs/openapi.json`.
+
+Para probar el flujo, creá un cliente y un repartidor con `/api/users`, un pedido con el ID del cliente y una entrega con los IDs del pedido y repartidor. Los IDs de los previews de mocks no están guardados: usá seed o POST de negocio antes de referenciarlos en la API real. No se documenta autenticación porque no está implementada.

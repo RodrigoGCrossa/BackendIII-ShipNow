@@ -1,4 +1,6 @@
 import express from 'express';
+import swaggerUi from 'swagger-ui-express';
+import specification from './config/swagger.js';
 import loggerRouter from './routes/logger.js';
 import requestLogger from './middlewares/request-logger.middleware.js';
 import mocks from './routes/mocks.js';
@@ -10,6 +12,8 @@ import AppError from './errors/AppError.js';
 import errorHandler from './middlewares/error.middleware.js';
 const app=express();
 app.use(requestLogger);
+app.get('/api/docs/openapi.json',(req,res)=>res.json(specification));
+app.use('/api/docs',swaggerUi.serve,swaggerUi.setup(specification));
 app.use('/api/logger',loggerRouter);
 app.use(express.json({limit:'100kb'}));
 app.use('/api/mocks',mocks);
