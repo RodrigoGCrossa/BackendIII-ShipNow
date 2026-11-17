@@ -1709,7 +1709,7 @@
           "Mocks"
         ],
         "summary": "Generar users sin persistir",
-        "description": "Los datos son simulados. Orders/deliveries/all incluyen todas sus referencias en el conjunto devuelto.",
+        "description": "Disponible solo con ENABLE_INTERNAL_ENDPOINTS=true; deshabilitado por defecto en producción. Los datos son simulados. Orders/deliveries/all incluyen todas sus referencias en el conjunto devuelto.",
         "parameters": [
           {
             "name": "qty",
@@ -1748,6 +1748,16 @@
           },
           "500": {
             "description": "Error interno sin detalles sensibles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Endpoints internos deshabilitados en este entorno",
             "content": {
               "application/json": {
                 "schema": {
@@ -1765,7 +1775,7 @@
           "Mocks"
         ],
         "summary": "Generar drivers sin persistir",
-        "description": "Los datos son simulados. Orders/deliveries/all incluyen todas sus referencias en el conjunto devuelto.",
+        "description": "Disponible solo con ENABLE_INTERNAL_ENDPOINTS=true; deshabilitado por defecto en producción. Los datos son simulados. Orders/deliveries/all incluyen todas sus referencias en el conjunto devuelto.",
         "parameters": [
           {
             "name": "qty",
@@ -1811,6 +1821,16 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "Endpoints internos deshabilitados en este entorno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -1821,7 +1841,7 @@
           "Mocks"
         ],
         "summary": "Generar orders sin persistir",
-        "description": "Los datos son simulados. Orders/deliveries/all incluyen todas sus referencias en el conjunto devuelto.",
+        "description": "Disponible solo con ENABLE_INTERNAL_ENDPOINTS=true; deshabilitado por defecto en producción. Los datos son simulados. Orders/deliveries/all incluyen todas sus referencias en el conjunto devuelto.",
         "parameters": [
           {
             "name": "qty",
@@ -1857,6 +1877,16 @@
           },
           "500": {
             "description": "Error interno sin detalles sensibles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Endpoints internos deshabilitados en este entorno",
             "content": {
               "application/json": {
                 "schema": {
@@ -1874,7 +1904,7 @@
           "Mocks"
         ],
         "summary": "Generar deliveries sin persistir",
-        "description": "Los datos son simulados. Orders/deliveries/all incluyen todas sus referencias en el conjunto devuelto.",
+        "description": "Disponible solo con ENABLE_INTERNAL_ENDPOINTS=true; deshabilitado por defecto en producción. Los datos son simulados. Orders/deliveries/all incluyen todas sus referencias en el conjunto devuelto.",
         "parameters": [
           {
             "name": "qty",
@@ -1910,6 +1940,16 @@
           },
           "500": {
             "description": "Error interno sin detalles sensibles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Endpoints internos deshabilitados en este entorno",
             "content": {
               "application/json": {
                 "schema": {
@@ -1927,7 +1967,7 @@
           "Mocks"
         ],
         "summary": "Generar all sin persistir",
-        "description": "Los datos son simulados. Orders/deliveries/all incluyen todas sus referencias en el conjunto devuelto.",
+        "description": "Disponible solo con ENABLE_INTERNAL_ENDPOINTS=true; deshabilitado por defecto en producción. Los datos son simulados. Orders/deliveries/all incluyen todas sus referencias en el conjunto devuelto.",
         "parameters": [
           {
             "name": "qty",
@@ -1970,6 +2010,16 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "Endpoints internos deshabilitados en este entorno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -1980,7 +2030,7 @@
           "Mocks"
         ],
         "summary": "Persistir datos de prueba en MongoDB",
-        "description": "Crea qty registros del recurso elegido y sus dependencias. Usa una base descartable. Compensación local ante fallo, sin transacción distribuida.",
+        "description": "Disponible solo con ENABLE_INTERNAL_ENDPOINTS=true; deshabilitado por defecto en producción. Crea qty registros del recurso elegido y sus dependencias. Usa una base descartable. Compensación local ante fallo, sin transacción distribuida.",
         "parameters": [
           {
             "name": "qty",
@@ -2056,6 +2106,16 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "Endpoints internos deshabilitados en este entorno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -2066,7 +2126,7 @@
           "Logger"
         ],
         "summary": "Emitir los seis niveles de Winston",
-        "description": "Herramienta interna de validación. Los eventos error y fatal son intencionales; no representan un fallo real.",
+        "description": "Disponible solo con ENABLE_INTERNAL_ENDPOINTS=true; deshabilitado por defecto en producción. Herramienta interna de validación. Los eventos error y fatal son intencionales; no representan un fallo real.",
         "responses": {
           "200": {
             "description": "Operación exitosa",
@@ -2110,6 +2170,16 @@
           },
           "500": {
             "description": "Error interno sin detalles sensibles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Endpoints internos deshabilitados en este entorno",
             "content": {
               "application/json": {
                 "schema": {

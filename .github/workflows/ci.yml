@@ -45,26 +45,3 @@ jobs:
       - name: Limpiar recursos descartables del runner
         if: always()
         run: docker compose down --volumes --remove-orphans
-  checkpoints:
-    name: Etiquetar entregas verificadas
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [functional, containers]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-      - name: Conservar checkpoints aprobados
-        env:
-          FINAL_SHA: ${{ github.sha }}
-        run: |
-          if ! git rev-parse refs/tags/preentrega-8 >/dev/null 2>&1; then
-            git tag preentrega-8 7c8b127143e5ba6914fec5b3819a8f5062594fef
-            git push origin refs/tags/preentrega-8
-          fi
-          if ! git rev-parse refs/tags/proyecto-final >/dev/null 2>&1; then
-            git tag proyecto-final "$FINAL_SHA"
-            git push origin refs/tags/proyecto-final
-          fi

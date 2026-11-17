@@ -226,4 +226,4 @@ Proyecto académico ejecutable en un entorno controlado. No incorpora autenticac
 
 Los cambios entre pedido y entrega y la compensación de seed no son transacciones entre colecciones: no garantizan atomicidad ante caída abrupta de MongoDB. Los cambios de estado comparan el estado anterior para detectar conflictos. Para garantías completas se requiere una estrategia transaccional y una topología MongoDB apropiada.
 
-Las etiquetas preentrega-1 a preentrega-8 y proyecto-final conservan checkpoints del curso. La rama main contiene la versión integrada y las correcciones posteriores.
+Las etiquetas preentrega-1 a preentrega-7 conservan los checkpoints iniciales. La preentrega 8 y el proyecto final se identifican por sus commits de producción e integración final. La rama main contiene la versión integrada y las correcciones posteriores.
