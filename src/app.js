@@ -1,4 +1,5 @@
 import express from 'express';
+import mocks from './routes/mocks.js';
 import users from './routes/users.js';
 import products from './routes/products.js';
 import orders from './routes/orders.js';
@@ -6,6 +7,7 @@ import deliveries from './routes/deliveries.js';
 import errorHandler from './middlewares/error.middleware.js';
 const app=express();
 app.use(express.json({limit:'100kb'}));
+app.use('/api/mocks',mocks);
 app.use('/api/users',users);
 app.use('/api/products',products);
 app.use('/api/orders',orders);

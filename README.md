@@ -31,3 +31,11 @@ Transiciones de pedido: created → assigned → picked_up → in_transit → de
 ## Referencia
 
 Base docente: https://github.com/Rutito2010/Backend-III-101970/tree/main/Clase-1 . Se conservan los campos y métodos principales; se corrigen el enlace de controllers, cálculo de items y health check. Las respuestas se unifican para evitar contratos distintos entre módulos. No se implementa correo: la base solo contenía una simulación sin uso.
+
+## Mocking
+
+GET `/api/mocks/users?qty=2` y `/api/mocks/drivers?qty=2` devuelven arrays sin guardar. GET `/api/mocks/orders?qty=2`, `/api/mocks/deliveries?qty=2` y `/api/mocks/all?qty=2` devuelven un conjunto con usuarios y relaciones consistentes; los IDs de referencias están presentes en ese conjunto. No se consulta MongoDB para generar estos datos.
+
+POST `/api/mocks/seed?qty=10`, con body JSON `{ "resource":"users" }`, guarda 10 usuarios y devuelve `insertados`, `coleccion` y los conteos por entidad. `resource` puede ser users, drivers, orders, deliveries o all; por defecto users. Orders genera también clientes; deliveries/all genera clientes, repartidores, pedidos y entregas vinculados. `qty` va de 1 a 100; se rechazan negativos, fracciones y cantidades excesivas. Las contraseñas de carga se generan y se guardan con hash; los previews no contienen contraseñas.
+
+La carga usa MongoDB real y compensación de los registros propios ante fallos de inserción. No es una transacción entre colecciones: ante una caída de MongoDB durante la compensación, se debe revisar la carga. Usá una base descartable para seeds.
