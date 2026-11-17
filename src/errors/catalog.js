@@ -1,4 +1,5 @@
 export const ERRORS = Object.freeze({
+ FILE_NOT_FOUND: Object.freeze({code:'FILE_NOT_FOUND',statusCode:404,message:'Archivo no encontrado'}),
  INVALID_DATA: Object.freeze({code:'INVALID_DATA',statusCode:400,message:"Datos inválidos"}),
  INVALID_ID: Object.freeze({code:'INVALID_ID',statusCode:400,message:"El ID debe tener 24 caracteres hexadecimales"}),
  INVALID_STATE: Object.freeze({code:'INVALID_STATE',statusCode:400,message:"Estado o transición inválida"}),

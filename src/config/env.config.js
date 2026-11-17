@@ -10,7 +10,9 @@ export function validateConfig(env) {
   if (!/^mongodb(\+srv)?:\/\//.test(env.MONGODB_URI)) throw new Error('MONGODB_URI debe ser una URI de MongoDB');
   const logLevel=env.LOG_LEVEL || (env.NODE_ENV==='development'?'debug':'info');
   if(!['fatal','error','warning','info','http','debug'].includes(logLevel)) throw new Error('LOG_LEVEL inválido');
-  return Object.freeze({ port, mongoUri: env.MONGODB_URI, nodeEnv: env.NODE_ENV, logLevel, logDir: env.LOG_DIR || 'logs', mongoBinary: env.MONGODB_BINARY || undefined });
+  const uploadMaxBytes=Number(env.UPLOAD_MAX_BYTES || 2097152);
+  if(!Number.isInteger(uploadMaxBytes)||uploadMaxBytes<1||uploadMaxBytes>10485760) throw new Error('UPLOAD_MAX_BYTES debe estar entre 1 y 10485760');
+  return Object.freeze({ uploadDir: env.UPLOAD_DIR || 'uploads', uploadMaxBytes, port, mongoUri: env.MONGODB_URI, nodeEnv: env.NODE_ENV, logLevel, logDir: env.LOG_DIR || 'logs', mongoBinary: env.MONGODB_BINARY || undefined });
 }
 export const config = validateConfig(process.env);
 export default config;

@@ -1,6 +1,12 @@
+import DocumentController from '../controllers/document.controller.js';
+import {receiveFile} from '../config/multer.js';
 import {Router} from 'express';
 import UserController from '../controllers/user.controller.js';
 const router=Router();const controller=new UserController();
+const documents=new DocumentController('users');
+router.post('/:id/documents',receiveFile,documents.upload);
+router.get('/:id/documents',documents.list);
+router.get('/:id/documents/:documentId/file',documents.download);
 router.get('/',controller.getAll);
 router.get('/:id',controller.getById);
 router.post('/',controller.create);

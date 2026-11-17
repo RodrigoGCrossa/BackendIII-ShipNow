@@ -67,3 +67,20 @@ Herramientas: Mocha, Chai y Supertest. Ejecutá `cp .env.test.example .env.test`
 Variables propias: PORT=8081, NODE_ENV=test, MONGODB_URI de ejemplo para validar configuración, LOG_LEVEL y LOG_DIR; el runner conecta exclusivamente con la URI del MongoDB temporal. El script fija NODE_ENV=test. No se leen datos cargados manualmente. Hooks limpian colecciones antes de cada test y eliminan la base al finalizar, con comprobación de nombre aleatorio propio de la suite. Los tests se agrupan en `tests/` por recurso.
 
 Cubre usuarios, productos, pedidos, entregas, transiciones, mocks (preview/seed), fallos de persistencia simulados, logger, Swagger, health check, configuración y errores de HTTP. Se verifican status, body, códigos, mensajes y efectos persistidos. La prueba de fallo del repositorio usa un sustituto explícito; las pruebas HTTP de seed y negocio utilizan MongoDB real. Para comprobar repetibilidad: `npm test && npm test`.
+
+## Documentos y comprobantes
+
+Multer se configura en `src/config/multer.js`: un archivo en el campo **file**, PDF/PNG/JPEG, extensión coherente con MIME y firma inicial del contenido. Máximo **2 MiB** por defecto, configurable con UPLOAD_MAX_BYTES (hasta 10 MiB). No se trata de un antivirus ni de validación completa del documento. El directorio UPLOAD_DIR contiene subcarpetas para documentos, licencias y comprobantes; los nombres se generan con UUID.
+
+- POST `/api/users/:id/documents`: multipart/form-data con file y documentType=user_document o driver_license. La licencia exige rol driver.
+- POST `/api/orders/:id/proofs` y `/api/deliveries/:id/proofs`: multipart/form-data con file. Tipo fijo delivery_proof.
+- GET sobre esas mismas rutas: lista metadatos.
+- GET sobre esas rutas con `/:documentId/file`: recupera los bytes del archivo asociado.
+
+Ejemplo: `curl -F 'documentType=user_document' -F 'file=@documento.pdf' http://localhost:8080/api/users/ID_USUARIO/documents`.
+
+MongoDB guarda nombre original, nombre generado, ruta relativa, MIME, tamaño, tipo de documento y fecha. La API verifica que la entidad exista y elimina el archivo si fallan las validaciones o el guardado. No se expone toda la carpeta mediante archivos estáticos. Uploads y logs están ignorados por Git; no se entregan archivos de prueba. Son almacenamiento local de desarrollo: en producción requieren una política de respaldo/retención y autorización.
+
+Los tests incluyen cargas válidas, recuperación y asociación persistida, archivo faltante, MIME/extensión no permitidos, contenido incompatible, tamaño excedido, campo incorrecto, tipo de documento inválido y entidad inexistente. Los uploads de la suite se crean en `.cache/test-uploads` y se eliminan mediante hooks. Swagger documenta estos endpoints como multipart/form-data.
+
+Las entidades con documentos/comprobantes no se eliminan para evitar referencias huérfanas. Un pedido con entrega asociada cambia de estado desde esa entrega. La asignación de un driver a una entrega pendiente la pasa a assigned; no puede reasignarse una entrega completada.

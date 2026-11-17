@@ -11,7 +11,8 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "test": "NODE_ENV=test mocha --timeout 20000 --require ./tests/setup.js 'tests/**/*.test.js'",
-    "check": "node scripts/check.js"
+    "check": "node scripts/check.js",
+    "audit": "node scripts/audit.js"
   },
   "dependencies": {
     "dotenv": "^16.6.1",

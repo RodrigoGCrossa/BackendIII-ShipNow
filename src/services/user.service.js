@@ -21,5 +21,5 @@ export default class UserService {
  }
  async create(data) { const clean=await this.validate(data,true); if(await this.repository.findOne({email:clean.email})) fail('DUPLICATE','El email ya existe',409); return this.repository.create(clean); }
  async update(value,data) { await this.getById(value); return this.repository.update(value,await this.validate(data,false)); }
- async delete(value) { await this.getById(value); if(await new OrderRepository().findOne({customer:value}) || await new DeliveryRepository().findOne({driver:value})) fail('CONFLICT','El usuario tiene operaciones asociadas',409); return this.repository.delete(value); }
+ async delete(value) { const user=await this.getById(value); if(user.documents?.length) fail('CONFLICT','El usuario tiene documentos asociados'); if(await new OrderRepository().findOne({customer:value}) || await new DeliveryRepository().findOne({driver:value})) fail('CONFLICT','El usuario tiene operaciones asociadas',409); return this.repository.delete(value); }
 }
