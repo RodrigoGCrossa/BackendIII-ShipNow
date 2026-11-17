@@ -1,0 +1,13 @@
+node_modules/
+.env
+.env.*
+!.env.example
+!.env.test.example
+logs/
+uploads/
+coverage/
+.cache/
+*.log
+.DS_Store
+AGENTS.md
+ENTREGAS.md
