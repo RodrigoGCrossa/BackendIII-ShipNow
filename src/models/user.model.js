@@ -9,4 +9,5 @@ const schema = new mongoose.Schema({
  role: { type: String, enum: Object.values(USER_ROLES), default: USER_ROLES.CUSTOMER },
  isAvailable: { type: Boolean, default: false }
 }, { timestamps: true });
+schema.index({ createdAt: -1, _id: -1 });
 export default mongoose.model('User', schema);

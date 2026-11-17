@@ -1,6 +1,6 @@
 import User from '../models/user.model.js';
 export default class UserRepository {
- async findAll(filter = {}, {skip = 0, limit = 20} = {}) { return User.find(filter).select('-password').sort({createdAt:-1,_id:-1}).skip(skip).limit(limit).lean(); }
+ async findAll(filter = {}, {skip = 0, limit = 20} = {}) { return User.find(filter).select('-password -documents').sort({createdAt:-1,_id:-1}).skip(skip).limit(limit).lean(); }
  async findById(id) { return User.findById(id).select('-password').lean(); }
  async findOne(filter) { return User.findOne(filter).select('-password').lean(); }
  async create(data) { const result = await User.create(data); return this.findById(result._id); }

@@ -2109,23 +2109,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "ok"
-                      ]
-                    },
-                    "timestamp": {
-                      "type": "string",
-                      "format": "date-time"
-                    }
-                  },
-                  "required": [
-                    "status",
-                    "timestamp"
-                  ]
+                  "$ref": "#/components/schemas/HealthResponse"
                 }
               }
             }
@@ -2896,6 +2880,52 @@
           }
         }
       }
+    },
+    "/api/ready": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Disponibilidad de la API y MongoDB",
+        "description": "Ejecuta ping a MongoDB con tiempo máximo controlado. No devuelve URI ni credenciales.",
+        "responses": {
+          "200": {
+            "description": "API y base disponibles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/HealthResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "database": {
+                          "type": "string",
+                          "enum": [
+                            "ready"
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "MongoDB no está disponible",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3403,6 +3433,39 @@
             ]
           },
           "uploadedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "HealthResponse": {
+        "type": "object",
+        "required": [
+          "status",
+          "environment",
+          "uptime",
+          "timestamp"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok"
+            ]
+          },
+          "environment": {
+            "type": "string",
+            "enum": [
+              "development",
+              "test",
+              "production"
+            ]
+          },
+          "uptime": {
+            "type": "number",
+            "minimum": 0
+          },
+          "timestamp": {
             "type": "string",
             "format": "date-time"
           }

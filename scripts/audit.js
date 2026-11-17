@@ -1,7 +1,7 @@
 import {execFileSync} from 'node:child_process';
 import {readFile} from 'node:fs/promises';
 const files=execFileSync('git',['ls-files','-z'],{encoding:'utf8'}).split('\0').filter(Boolean);
-const allowedEnv=new Set(['.env.example','.env.test.example']);
+const allowedEnv=new Set(['.env.example','.env.test.example','.env.production.example']);
 for(const file of files) {
  if(/(^|\/)(node_modules|logs|uploads|coverage|seguimiento|consignas|\.cache|\.git)(\/|$)/.test(file)||/(^|\/)(AGENTS\.md|ENTREGAS\.md|.*\.pdf)$/.test(file)||/(^|\/)\.env/.test(file)&&!allowedEnv.has(file)) throw new Error(`Archivo privado o generado en Git: ${file}`);
  const content=await readFile(file,'utf8');

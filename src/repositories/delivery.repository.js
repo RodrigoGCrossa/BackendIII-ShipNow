@@ -1,6 +1,6 @@
 import Delivery from '../models/delivery.model.js';
 export default class DeliveryRepository {
- async findAll(filter = {}, {skip = 0, limit = 20} = {}) { return Delivery.find(filter).select('-__v').sort({createdAt:-1,_id:-1}).skip(skip).limit(limit).lean(); }
+ async findAll(filter = {}, {skip = 0, limit = 20} = {}) { return Delivery.find(filter).select('-__v -proofs').sort({createdAt:-1,_id:-1}).skip(skip).limit(limit).lean(); }
  async findById(id) { return Delivery.findById(id).select('-__v').lean(); }
  async findOne(filter) { return Delivery.findOne(filter).select('-__v').lean(); }
  async create(data) { const result = await Delivery.create(data); return this.findById(result._id); }

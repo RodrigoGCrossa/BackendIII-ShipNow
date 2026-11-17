@@ -86,4 +86,28 @@ Las entidades con documentos/comprobantes no se eliminan para evitar referencias
 
 `npm run check` verifica la sintaxis; `npm run audit` revisa los archivos versionados y detecta material privado y patrones habituales de credenciales. No reemplaza una auditoría de seguridad completa. `npm test` ejecuta las pruebas funcionales con MongoDB temporal.
 
-El proyecto conserva su evolución en las etiquetas preentrega-1 a preentrega-7. La rama main contiene la versión integrada y sus correcciones; los checkpoints anteriores muestran el alcance de cada módulo. La preentrega 8 y la entrega final no forman parte de esta versión.
+El proyecto conserva su evolución en las etiquetas preentrega-1 a preentrega-7. La rama main contiene la versión integrada y sus correcciones; los checkpoints anteriores muestran el alcance de cada módulo. La preentrega 8 incorpora configuración productiva y contenedores.
+
+## Producción y Docker
+
+La configuración sigue centralizada y se valida antes de iniciar. `.env.production.example` documenta los valores de producción; no se usa JWT ni hay servicios externos que requieran URLs o secretos propios. API_BASE_URL configura el servidor mostrado en Swagger. En producción LOG_LEVEL solo permite info, warning, error o fatal; no hay salida por consola.
+
+ENABLE_INTERNAL_ENDPOINTS=false por defecto en producción: mocks y logger de prueba devuelven el 404 uniforme. En desarrollo/testing están habilitados. Swagger se conserva para revisión con ENABLE_SWAGGER=true; puede deshabilitarse explícitamente. No hay autenticación implementada: esta configuración es para un entorno controlado, no para publicar una API de escritura sin autorización.
+
+GET `/api/health` devuelve status, environment, uptime y timestamp. GET `/api/ready` también comprueba MongoDB; devuelve 503 si no está disponible. No se exponen credenciales ni datos de conexión. JSON_LIMIT_BYTES limita los cuerpos JSON (100 KiB por defecto); REQUEST_TIMEOUT_MS limita la recepción de requests. Los listados tienen paginación con máximo 100 resultados y desplazamiento máximo 100000; excluyen los metadatos de archivos para reducir payloads. Las consultas más usadas tienen índices.
+
+Construcción: `docker build -t shipnow:local .`.
+
+Ejecución con MongoDB accesible desde Docker: `docker run --rm --env-file .env.production -p 8080:8080 -v shipnow-uploads:/app/uploads -v shipnow-logs:/app/logs shipnow:local`. Antes copiá `.env.production.example` a `.env.production` y ajustá MONGODB_URI; desde un contenedor localhost es el propio contenedor. Para una base en tu Mac podés usar host.docker.internal. Los volúmenes conservan archivos/logs al recrear el contenedor.
+
+La imagen usa Node.js 24, dos etapas, `npm ci --omit=dev`, usuario node y healthcheck de readiness. Se copian solo dependencias productivas, código y el healthcheck. `.dockerignore` excluye variables reales, node_modules, Git, logs, uploads, coverage, cachés, temporales y material privado. No se copian tests ni documentación privada a la imagen.
+
+### Docker Compose: API + MongoDB
+
+Ejecutá `docker compose up --build -d --wait` desde la raíz del proyecto. También podés usar `docker-compose up --build` si tu instalación conserva el comando clásico. La API escucha en http://localhost:8080 y Swagger en http://localhost:8080/api/docs/ . Compose no publica el puerto de MongoDB; la API se conecta a mongo:27017 en la red interna y espera su healthcheck. El healthcheck de la API consulta `/api/ready`.
+
+Los volúmenes mongo-data, api-logs y api-uploads conservan base, logs y archivos al recrear contenedores. `docker compose down` detiene y elimina los contenedores sin borrar esos volúmenes. Para eliminar datos descartables de pruebas podés usar `docker compose down --volumes`; no lo uses sobre datos que quieras conservar. `docker compose logs api` muestra stdout del arranque; los eventos Winston de producción están en el volumen de logs y se consultan con `docker compose exec api sh -c 'tail -n 50 logs/combined.log'`.
+
+Compose fija producción, logs info y endpoints internos desactivados. PORT permite cambiar el puerto del host; el contenedor mantiene 8080. API_BASE_URL debe coincidir con la URL desde donde probarás Swagger. No incluye credenciales de MongoDB: este Compose se usa para revisión local, publica la API solo en loopback y mantiene la base dentro de su red. Para un despliegue público se deben incorporar autenticación, TLS, autorización y credenciales administradas fuera del repositorio.
+
+El workflow ShipNow CI corre la suite funcional dos veces y construye/levanta los contenedores en un runner descartable. `node scripts/smoke-container.js` valida health, readiness, Swagger, restricciones productivas, un flujo persistido y el contenido/usuario de la imagen con Compose ya iniciado.

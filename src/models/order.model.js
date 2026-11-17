@@ -11,4 +11,7 @@ const schema = new mongoose.Schema({
  priority:{type:String,enum:Object.values(ORDER_PRIORITY),default:ORDER_PRIORITY.NORMAL},
  delivery:{type:mongoose.Schema.Types.ObjectId,ref:'Delivery',default:null}
 },{timestamps:true});
+schema.index({ createdAt: -1, _id: -1 });
+schema.index({ customer: 1 });
+schema.index({ status: 1, createdAt: -1, _id: -1 });
 export default mongoose.model('Order',schema);

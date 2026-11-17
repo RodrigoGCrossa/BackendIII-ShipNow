@@ -1,4 +1,5 @@
 export const ERRORS = Object.freeze({
+ DATABASE_UNAVAILABLE: Object.freeze({code:'DATABASE_UNAVAILABLE',statusCode:503,message:'La base de datos no está disponible'}),
  FILE_NOT_FOUND: Object.freeze({code:'FILE_NOT_FOUND',statusCode:404,message:'Archivo no encontrado'}),
  INVALID_DATA: Object.freeze({code:'INVALID_DATA',statusCode:400,message:"Datos inválidos"}),
  INVALID_ID: Object.freeze({code:'INVALID_ID',statusCode:400,message:"El ID debe tener 24 caracteres hexadecimales"}),
