@@ -28,9 +28,6 @@ Roles centralizados: admin, user, customer, driver y store. USER se conserva por
 
 Transiciones de pedido: created → assigned → picked_up → in_transit → delivered; puede cancelarse desde created o assigned. Entrega: pending → assigned → in_transit → delivered. Una entrega actualiza el estado del pedido asociado. Los estados terminales no se reabren.
 
-## Referencia
-
-Base docente: https://github.com/Rutito2010/Backend-III-101970/tree/main/Clase-1 . Se conservan los campos y métodos principales; se corrigen el enlace de controllers, cálculo de items y health check. Las respuestas se unifican para evitar contratos distintos entre módulos. No se implementa correo: la base solo contenía una simulación sin uso.
 
 ## Mocking
 
