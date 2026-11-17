@@ -18,6 +18,10 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci --ignore-scripts
+      - name: Diagnóstico de dependencias
+        run: npm audit --json || true
+      - name: Auditoría del runtime
+        run: npm audit --omit=dev --audit-level=high
       - run: cp .env.test.example .env.test
       - run: npm run check && npm run audit
       - name: Suite funcional, primera corrida
