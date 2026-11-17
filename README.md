@@ -173,7 +173,7 @@ npm run check         # Sintaxis de src, tests y scripts
 npm run audit         # Archivos versionados y patrones comunes de secretos
 ```
 
-La auditoría del repositorio no reemplaza una auditoría de seguridad completa.
+La auditoría del repositorio no reemplaza una auditoría de seguridad completa. CI también ejecuta `npm audit` sobre las dependencias. Los overrides de glob y minimatch en package.json fijan ramas con correcciones de seguridad para las dependencias de Mocha; su compatibilidad está cubierta por la suite.
 
 ## Docker y producción
 
