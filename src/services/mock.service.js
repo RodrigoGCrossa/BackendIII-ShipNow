@@ -1,3 +1,4 @@
+import logger from '../config/logger.js';
 import {randomBytes,randomUUID} from 'node:crypto';
 import { USER_ROLES, ORDER_STATUS, DELIVERY_STATUS, ORDER_PRIORITY } from '../constants/index.js';
 import AppError from '../errors/AppError.js';
@@ -23,6 +24,7 @@ export default class MockService {
     if(['deliveries','all'].includes(resource)) {const delivery={_id:objectId(),order:order._id,driver:driver._id,status:DELIVERY_STATUS.ASSIGNED,priority:ORDER_PRIORITY.NORMAL,assignedAt:new Date(),deliveredAt:null};order.delivery=delivery._id;order.status=ORDER_STATUS.ASSIGNED;bundle.deliveries.push(delivery);}
    }
   }
+  logger.info('Datos mock generados',{resource,qty});
   return bundle;
  }
  async preview(resource,qty) {const bundle=await this.generate(resource,qty);return ['users','drivers'].includes(resource)?bundle[resource]:bundle;}
@@ -31,6 +33,7 @@ export default class MockService {
   const password=await hashPassword(randomUUID());
   const users=[...bundle.users,...bundle.drivers].map(user=>({...user,password}));
   try {await this.repository.insertBundle({...bundle,users});} catch(cause) {throw new AppError('MOCK_PERSISTENCE_ERROR',undefined,{cause});}
+  logger.info('Carga mock completada',{resource,users:users.length,orders:bundle.orders.length,deliveries:bundle.deliveries.length});
   return {insertados:resource==='users'?users.length:bundle[resource]?.length??bundle.orders.length,coleccion:resource==='users'?'usuarios':resource,totales:{usuarios:users.length,pedidos:bundle.orders.length,entregas:bundle.deliveries.length}};
  }
 }

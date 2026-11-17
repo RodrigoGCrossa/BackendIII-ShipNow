@@ -1,3 +1,4 @@
+import logger from '../config/logger.js';
 import DeliveryRepository from '../repositories/delivery.repository.js';
 import OrderRepository from '../repositories/order.repository.js';
 import OrderService from './order.service.js';
@@ -16,6 +17,7 @@ export default class DeliveryService {
   const result=await this.repository.create({order:order._id,driver:data.driver||null,status:data.driver?DELIVERY_STATUS.ASSIGNED:DELIVERY_STATUS.PENDING,priority:enumValue(data.priority??order.priority,ORDER_PRIORITY,'priority'),assignedAt:data.driver?new Date():null});
   try {await new OrderRepository().update(order._id,{delivery:result._id,status:data.driver?ORDER_STATUS.ASSIGNED:ORDER_STATUS.CREATED});}
   catch(error) {await this.repository.delete(result._id);throw error;}
+  logger.info('Entrega creada',{event:'delivery_created',id:String(result._id)});
   return result;
  }
  async update(value,data) {

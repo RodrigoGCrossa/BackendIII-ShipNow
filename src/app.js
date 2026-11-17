@@ -1,4 +1,6 @@
 import express from 'express';
+import loggerRouter from './routes/logger.js';
+import requestLogger from './middlewares/request-logger.middleware.js';
 import mocks from './routes/mocks.js';
 import users from './routes/users.js';
 import products from './routes/products.js';
@@ -7,6 +9,8 @@ import deliveries from './routes/deliveries.js';
 import AppError from './errors/AppError.js';
 import errorHandler from './middlewares/error.middleware.js';
 const app=express();
+app.use(requestLogger);
+app.use('/api/logger',loggerRouter);
 app.use(express.json({limit:'100kb'}));
 app.use('/api/mocks',mocks);
 app.use('/api/users',users);

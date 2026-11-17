@@ -45,3 +45,11 @@ La carga usa MongoDB real y compensación de los registros propios ante fallos d
 Services lanzan `AppError`; controllers llaman `next(error)` y el middleware global es el único que construye errores HTTP. `src/errors/catalog.js` contiene códigos, mensajes y status. Formato: `{ "status":"error", "error":{ "code":"ORDER_NOT_FOUND", "message":"Pedido no encontrado" } }`.
 
 Probá `GET /api/orders/000000000000000000000000` (404), `GET /api/mocks/users?qty=-1` (400, INVALID_MOCK_QUANTITY), un ID mal formado (400, INVALID_ID), un estado desconocido (400, INVALID_STATE), JSON incorrecto (400, INVALID_JSON) y una ruta inexistente (404, ROUTE_NOT_FOUND). Duplicados devuelven 409; fallos de seed, 503. Los errores inesperados responden 500 sin exponer stacks ni detalles internos.
+
+## Logging
+
+Winston se configura una sola vez en `src/config/logger.js`. Niveles, de mayor a menor severidad: fatal, error, warning, info, http, debug. GET `/api/logger/test` emite los seis niveles; sus mensajes error/fatal son pruebas intencionales, no fallos del servidor.
+
+`logs/error.log` recibe únicamente error y fatal; `logs/combined.log` registra los eventos desde LOG_LEVEL. Rotación por tamaño: 1 MiB para errores, 5 MiB para combined, máximo 5 archivos por transporte. Desarrollo usa consola y debug por defecto; test/producción solo archivos e info por defecto. LOG_DIR permite cambiar el destino. Los eventos contienen timestamp, nivel, mensaje y metadatos; no se registran bodies, contraseñas ni URIs. Los logs están ignorados en Git.
+
+Para comprobarlo, ejecutá el endpoint y revisá ambos archivos. Los errores esperados se registran como warning y los inesperados como error; la conexión inicial fallida usa fatal. La configuración inválida se rechaza antes de crear la aplicación y el logger.

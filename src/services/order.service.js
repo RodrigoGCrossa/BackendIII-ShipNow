@@ -1,3 +1,4 @@
+import logger from '../config/logger.js';
 import OrderRepository from '../repositories/order.repository.js';
 import UserService from './user.service.js';
 import { ORDER_STATUS, ORDER_PRIORITY, USER_ROLES } from '../constants/index.js';
@@ -18,6 +19,7 @@ export default class OrderService {
   if(!Number.isFinite(declaredValue)) fail('INVALID_DATA','El total excede el rango permitido');
   const shippingCost=config.nodeEnv==='production'?Math.round((50+declaredValue*0.01)*100)/100:10;
   const priority=enumValue(data.priority??ORDER_PRIORITY.NORMAL,ORDER_PRIORITY,'priority');
+  logger.info('Creación de pedido validada',{event:'order_create'});
   return this.repository.create({customer:customer._id,deliveryAddress,items,declaredValue,shippingCost,total:declaredValue+shippingCost,status:ORDER_STATUS.CREATED,priority});
  }
  async update(value,data) {
