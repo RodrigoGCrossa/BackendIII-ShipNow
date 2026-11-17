@@ -1,6 +1,7 @@
 import OrderService from '../services/order.service.js';
 export default class OrderController {
  constructor(service=new OrderService()) {this.service=service;}
+ tracking=async(req,res,next)=>{try{res.json({status:'success',payload:await this.service.tracking(req.params.trackingCode)});}catch(error){next(error);}};
  getAll=async(req,res,next)=>{try{res.json({status:'success',payload:await this.service.getAll(req.query)});}catch(error){next(error);}};
  getById=async(req,res,next)=>{try{res.json({status:'success',payload:await this.service.getById(req.params.id)});}catch(error){next(error);}};
  create=async(req,res,next)=>{try{res.status(201).json({status:'success',payload:await this.service.create(req.body)});}catch(error){next(error);}};

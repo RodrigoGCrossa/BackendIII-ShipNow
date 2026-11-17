@@ -1,3 +1,4 @@
+import {newTrackingCode} from './order.service.js';
 import logger from '../config/logger.js';
 import {randomBytes,randomUUID} from 'node:crypto';
 import { USER_ROLES, ORDER_STATUS, DELIVERY_STATUS, ORDER_PRIORITY } from '../constants/index.js';
@@ -19,9 +20,9 @@ export default class MockService {
    if(resource!=='drivers') bundle.users.push(user);
    if(['drivers','deliveries','all'].includes(resource)) bundle.drivers.push(driver);
    if(['orders','deliveries','all'].includes(resource)) {
-    const order={_id:objectId(),customer:user._id,items:[{name:'Paquete de prueba',quantity:2,price:100}],deliveryAddress:`Av. Italia ${1000+i}`,declaredValue:200,shippingCost:10,total:210,status:ORDER_STATUS.CREATED,priority:ORDER_PRIORITY.NORMAL,delivery:null};
+    const order={trackingCode:newTrackingCode(),history:[{status:ORDER_STATUS.CREATED,timestamp:new Date()}],_id:objectId(),customer:user._id,items:[{name:'Paquete de prueba',quantity:2,price:100}],deliveryAddress:`Av. Italia ${1000+i}`,declaredValue:200,shippingCost:10,total:210,status:ORDER_STATUS.CREATED,priority:ORDER_PRIORITY.NORMAL,delivery:null};
     bundle.orders.push(order);
-    if(['deliveries','all'].includes(resource)) {const delivery={_id:objectId(),order:order._id,driver:driver._id,status:DELIVERY_STATUS.ASSIGNED,priority:ORDER_PRIORITY.NORMAL,assignedAt:new Date(),deliveredAt:null};order.delivery=delivery._id;order.status=ORDER_STATUS.ASSIGNED;bundle.deliveries.push(delivery);}
+    if(['deliveries','all'].includes(resource)) {const delivery={_id:objectId(),order:order._id,driver:driver._id,status:DELIVERY_STATUS.ASSIGNED,priority:ORDER_PRIORITY.NORMAL,assignedAt:new Date(),deliveredAt:null};order.delivery=delivery._id;order.status=ORDER_STATUS.ASSIGNED;order.history.push({status:ORDER_STATUS.ASSIGNED,timestamp:new Date()});bundle.deliveries.push(delivery);}
    }
   }
   logger.info('Datos mock generados',{resource,qty});

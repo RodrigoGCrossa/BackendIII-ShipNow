@@ -5,6 +5,7 @@ export default class DeliveryRepository {
  async findOne(filter) { return Delivery.findOne(filter).select('-__v').lean(); }
  async create(data) { const result = await Delivery.create(data); return this.findById(result._id); }
  async update(id, data) { return Delivery.findByIdAndUpdate(id, {$set:data}, {new:true,runValidators:true}).select('-__v').lean(); }
+ async updateIfStatus(id,data,expectedStatus) { return Delivery.findOneAndUpdate({_id:id,status:expectedStatus},{$set:data},{new:true,runValidators:true}).select('-__v').lean(); }
  async delete(id) { return Delivery.findByIdAndDelete(id).select('-__v').lean(); }
  async addDocument(id, field, metadata) { return Delivery.findByIdAndUpdate(id, {$push:{[field]:metadata}}, {new:true,runValidators:true}).select('-__v').lean(); }
 }

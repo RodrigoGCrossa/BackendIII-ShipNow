@@ -26,13 +26,45 @@ const create = await json('/api/users', {
 });
 assert.equal(create.status, 201);
 assert.equal(create.body.payload.password, undefined);
-const order = await json('/api/orders', {
+const order = await json('/api/shipments', {
   method: 'POST',
   body: JSON.stringify({ customer: create.body.payload._id, deliveryAddress: 'Av. Italia 1234', items: [{ name: 'Caja', quantity: 2, price: 100 }] }),
 });
 assert.equal(order.status, 201);
 assert.equal(order.body.payload.shippingCost, 52);
 assert.equal(order.body.payload.total, 252);
+const driver = await json('/api/users', {
+  method: 'POST',
+  body: JSON.stringify({ firstName:'Driver', lastName:'Test', email:`driver-${Date.now()}@example.test`, password:'prueba123', role:'driver' }),
+});
+assert.equal(driver.status, 201);
+const delivery = await json('/api/deliveries', {
+  method: 'POST', body: JSON.stringify({ order:order.body.payload._id, driver:driver.body.payload._id }),
+});
+assert.equal(delivery.status, 201);
+for (const status of ['in_transit','delivered']) {
+  const changed = await json(`/api/deliveries/${delivery.body.payload._id}`, { method:'PUT', body:JSON.stringify({status}) });
+  assert.equal(changed.status, 200);
+}
+const pdf = '%PDF-1.4\nComprobante de contenedor\n%%EOF';
+const form = new FormData();
+form.append('file', new Blob([pdf], { type:'application/pdf' }), 'comprobante.pdf');
+const uploaded = await fetch(`${base}/api/shipments/${order.body.payload._id}/proofs`, { method:'POST', body:form });
+assert.equal(uploaded.status, 201);
+const document = (await uploaded.json()).payload.proofs[0];
+const downloadUrl = `/api/shipments/${order.body.payload._id}/proofs/${document._id}/file`;
+assert.equal(await (await fetch(base + downloadUrl)).text(), pdf);
+const trackingPath = `/api/tracking/${order.body.payload.trackingCode}`;
+assert.deepEqual((await json(trackingPath)).body.payload.history.map(event=>event.status), ['created','assigned','in_transit','delivered']);
+execFileSync('docker', ['compose','restart','api'], { stdio:'inherit' });
+let ready = false;
+for(let attempt=0;attempt<60;attempt++) {
+  try { if((await json('/api/ready')).status===200) {ready=true;break;} } catch {}
+  await new Promise(resolve=>setTimeout(resolve,500));
+}
+assert.equal(ready, true, 'La API debe volver a estar lista después del reinicio');
+assert.equal((await json(trackingPath)).body.payload.status, 'delivered');
+assert.equal(await (await fetch(base + downloadUrl)).text(), pdf, 'El volumen debe conservar el comprobante');
 const imageAudit = execFileSync('docker', ['compose', 'exec', '-T', 'api', 'node', '--input-type=module', '-e', `
   import fs from 'node:fs';
   if (process.getuid() === 0) throw new Error('La API corre como root');
@@ -42,4 +74,4 @@ const imageAudit = execFileSync('docker', ['compose', 'exec', '-T', 'api', 'node
   console.info('Imagen sin secretos/copias locales y usuario sin privilegios');
 `], { encoding: 'utf8' });
 console.info(imageAudit.trim());
-console.info('Health, readiness, Swagger, negocio y restricciones productivas: verificados en contenedores reales');
+console.info('Health, readiness, Swagger, envío, tracking, comprobante, reinicio y persistencia de volúmenes: verificados en contenedores reales');

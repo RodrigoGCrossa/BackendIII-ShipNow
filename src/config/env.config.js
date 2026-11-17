@@ -27,7 +27,7 @@ export function validateConfig(env) {
   if (!['development', 'test', 'production'].includes(env.NODE_ENV)) {
     throw new Error('NODE_ENV debe ser development, test o production');
   }
-  if (!/^mongodb(\+srv)?:\/\//.test(env.MONGODB_URI)) {
+  if (!/^mongodb(\+srv)?:\/\/[^/\s]+/.test(env.MONGODB_URI)) {
     throw new Error('MONGODB_URI debe ser una URI de MongoDB');
   }
   const production = env.NODE_ENV === 'production';
@@ -51,6 +51,8 @@ export function validateConfig(env) {
     mongoBinary: env.MONGODB_BINARY || undefined,
     logLevel,
     logDir: env.LOG_DIR || 'logs',
+    logMaxBytes: integer(env.LOG_MAX_BYTES, 'LOG_MAX_BYTES', 1024, 10485760, 1048576),
+    logMaxFiles: integer(env.LOG_MAX_FILES, 'LOG_MAX_FILES', 2, 30, 5),
     uploadDir: env.UPLOAD_DIR || 'uploads',
     uploadMaxBytes: integer(env.UPLOAD_MAX_BYTES, 'UPLOAD_MAX_BYTES', 1, 10485760, 2097152),
     jsonLimitBytes: integer(env.JSON_LIMIT_BYTES, 'JSON_LIMIT_BYTES', 1024, 1048576, 102400),

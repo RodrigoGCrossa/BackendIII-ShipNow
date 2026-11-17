@@ -1,4 +1,5 @@
 export const ERRORS = Object.freeze({
+ INVALID_TRACKING_CODE: Object.freeze({code:'INVALID_TRACKING_CODE',statusCode:400,message:'El código de tracking debe tener formato SN seguido de 32 caracteres hexadecimales'}),
  DATABASE_UNAVAILABLE: Object.freeze({code:'DATABASE_UNAVAILABLE',statusCode:503,message:'La base de datos no está disponible'}),
  FILE_NOT_FOUND: Object.freeze({code:'FILE_NOT_FOUND',statusCode:404,message:'Archivo no encontrado'}),
  INVALID_DATA: Object.freeze({code:'INVALID_DATA',statusCode:400,message:"Datos inválidos"}),

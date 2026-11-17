@@ -9,6 +9,7 @@ import users from './routes/users.js';
 import products from './routes/products.js';
 import orders from './routes/orders.js';
 import deliveries from './routes/deliveries.js';
+import tracking from './routes/tracking.js';
 import healthRouter from './routes/health.js';
 import AppError from './errors/AppError.js';
 import errorHandler from './middlewares/error.middleware.js';
@@ -29,6 +30,8 @@ export function createApp(settings = config) {
   app.use('/api/users', users);
   app.use('/api/products', products);
   app.use('/api/orders', orders);
+  app.use('/api/shipments', orders);
+  app.use('/api/tracking', tracking);
   app.use('/api/deliveries', deliveries);
   app.use('/api', healthRouter(settings));
   app.use((req, res, next) => next(new AppError('ROUTE_NOT_FOUND')));

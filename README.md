@@ -1,113 +1,229 @@
-# ShipNow API — Backend III
+# ShipNow API
 
-API de logística basada en la estructura y entidades de la clase 1. Conserva usuarios, pedidos y entregas, e incorpora productos exigidos por la preentrega 1.
+API de logística desarrollada para Backend III. Gestiona usuarios, productos, pedidos/envíos, entregas, seguimiento y documentos. Incluye mocks, errores centralizados, logging, Swagger, pruebas funcionales y ejecución con Docker Compose.
 
-## Ejecución
+## Tecnologías
 
-Requiere Node.js 20+ y MongoDB local. Ejecutá `npm install`, copiá `.env.example` a `.env` y ajustá la URI. Luego `npm start` o `npm run dev`. La configuración exige PORT, MONGODB_URI y NODE_ENV; si falta alguna, falla antes de iniciar el servidor. Los ejemplos locales no contienen credenciales.
+Node.js 24, Express 5, MongoDB 7 y Mongoose 8. Winston para logs, Multer para archivos y Swagger UI/OpenAPI 3 para documentación. Las pruebas usan Mocha, Chai y Supertest, con MongoDB temporal real.
+
+## Instalación y ejecución local
+
+Requiere Node.js 24 y MongoDB accesible desde tu equipo.
+
+```bash
+npm ci
+cp .env.example .env
+# Ajustar MONGODB_URI en .env si MongoDB no está en localhost:27017.
+npm start
+```
+
+`npm run dev` activa el reinicio automático de Node. La API escucha por defecto en http://localhost:8080. La configuración se valida antes del arranque: si faltan PORT, NODE_ENV o MONGODB_URI, el servidor no inicia y muestra el nombre de la variable requerida.
+
+Swagger: http://localhost:8080/api/docs/ . Especificación JSON: `/api/docs/openapi.json`.
+
+## Configuración
+
+Las variables se leen únicamente en `src/config/env.config.js`. `.env` y los archivos reales de otros entornos están ignorados por Git. Los ejemplos no contienen credenciales.
+
+| Variable | Uso |
+|---|---|
+| PORT | Puerto HTTP, entero de 1 a 65535. Obligatorio. |
+| NODE_ENV | development, test o production. Obligatorio. |
+| MONGODB_URI | Conexión a MongoDB. Obligatoria. |
+| LOG_LEVEL | debug por defecto en desarrollo; info en test/producción. |
+| LOG_DIR | Destino de logs; por defecto logs. |
+| LOG_MAX_BYTES | Tamaño de rotación de error.log; 1048576 por defecto. combined usa cinco veces ese valor. |
+| LOG_MAX_FILES | Máximo de archivos por transporte; 5 por defecto. |
+| UPLOAD_DIR | Destino de documentos; por defecto uploads. |
+| UPLOAD_MAX_BYTES | Máximo por archivo; 2097152 por defecto, hasta 10 MiB. |
+| JSON_LIMIT_BYTES | Máximo del body JSON; 102400 por defecto, hasta 1 MiB. |
+| REQUEST_TIMEOUT_MS | Tiempo máximo de recepción HTTP; 30000 por defecto. |
+| ENABLE_INTERNAL_ENDPOINTS | Habilita mocks y logger de prueba; false por defecto en producción. |
+| ENABLE_SWAGGER | Habilita Swagger; true por defecto para revisión. |
+| API_BASE_URL | URL pública que muestra Swagger; por defecto http://localhost:PORT. |
+| ENV_FILE | Archivo de variables alternativo. Por defecto .env o .env.test según el entorno. |
+| MONGODB_BINARY | Solo testing: ruta opcional a un mongod local compatible. |
+
+Para revisar producción fuera de Docker, copiá `.env.production.example` a `.env.production` y ejecutá `ENV_FILE=.env.production npm start`. En producción se rechazan LOG_LEVEL=debug/http y se usa salida a archivos, sin consola. No se usa JWT ni se integran servicios externos que requieran secretos o URLs adicionales.
 
 ## Arquitectura
 
-`routes → controllers → services → repositories → models`. Los controllers reciben HTTP y delegan errores. Services validan roles, calculan importes y controlan transiciones. Repositories encapsulan Mongoose, filtros, proyecciones sin contraseñas y validación de actualizaciones. La conexión a MongoDB está en el módulo de infraestructura `repositories/database.js`.
+```text
+src/
+├── config/          # Entorno, Winston, Swagger y Multer
+├── constants/       # Roles, estados, prioridades y tipos de documentos
+├── routes/          # Métodos y paths
+├── controllers/     # Entrada HTTP, respuestas y next(error)
+├── services/        # Validaciones y reglas de negocio
+├── repositories/    # Consultas, proyecciones y persistencia con Mongoose
+├── models/          # Schemas e índices
+├── errors/          # AppError y catálogo
+├── middlewares/     # Tratamiento global de errores y logs HTTP
+└── docs/            # Especificación OpenAPI
+```
 
-El stock determina el estado del producto en Service porque es una regla del dominio; Repository solo aplica la consulta y guarda. El total de pedidos se calcula en Service a partir de items, sin aceptar totales proporcionados por el cliente. Tarifa de desarrollo/testing: 10; producción: 50 + 1% del valor declarado, siguiendo el ejemplo de clase.
+El flujo es Router → Controller → Service → Repository → Model. Los controllers no importan Mongoose. El Service calcula importes y decide transiciones; el Repository aplica consultas, proyecciones y validación de actualizaciones. Por ejemplo, el estado del producto se deriva del stock en Service porque es una regla de negocio; el Repository guarda el resultado y limita lo que consulta.
 
-## Endpoints
+## Recursos y reglas principales
 
-GET/POST `/api/users`, `/api/products`, `/api/orders`, `/api/deliveries`.
-GET/PUT/DELETE sobre los mismos recursos con `/:id`. GET `/api/health`.
-Listados: `?page=1&limit=20` (máximo 100). Productos: `?available=true`; pedidos: `?status=created`.
-Las respuestas de negocio usan `{status:"success",payload:...}`. Los IDs son ObjectId de 24 caracteres hexadecimales.
+| Recurso | Rutas |
+|---|---|
+| Usuarios | GET/POST /api/users; GET/PUT/DELETE /api/users/:id |
+| Productos | GET/POST /api/products; GET/PUT/DELETE /api/products/:id |
+| Pedidos | GET/POST /api/orders; GET/PUT/DELETE /api/orders/:id |
+| Envíos | GET/POST /api/shipments; GET/PUT/DELETE /api/shipments/:id |
+| Entregas | GET/POST /api/deliveries; GET/PUT/DELETE /api/deliveries/:id |
+| Tracking | GET /api/tracking/:trackingCode |
+| Salud | GET /api/health y GET /api/ready |
 
-Usuario: `{ "firstName":"Ana", "lastName":"Pérez", "email":"ana@example.test", "password":"ejemplo123", "role":"customer" }`.
-Producto: `{ "name":"Caja", "price":100, "stock":10 }`.
-Pedido: `{ "customer":"ID_USUARIO", "deliveryAddress":"Av. Italia 1234", "items":[{"name":"Caja","quantity":2,"price":100}] }`.
-Entrega: `{ "order":"ID_PEDIDO", "driver":"ID_REPARTIDOR" }` (driver opcional).
+Un envío es el pedido logístico existente: Shipments es un alias de Orders, con el mismo modelo y datos. No hay dos colecciones ni duplicación de registros. Las rutas anteriores se conservan.
 
-Roles centralizados: admin, user, customer, driver y store. USER se conserva por requisito del módulo 1; CUSTOMER corresponde al dominio de las clases. Admin no puede asignarse mediante la API. Las contraseñas se guardan con scrypt y no se devuelven. Esta API académica no incluye autenticación: no debe exponerse públicamente como servicio sin incorporar autorización.
+Los listados usan `?page=1&limit=20`, con máximo 100 resultados y desplazamiento máximo 100000. Productos admite `?available=true` y pedidos/envíos `?status=created`. Los listados excluyen documentos/comprobantes y, en pedidos, historial; el detalle por ID conserva esa información. Las consultas frecuentes tienen índices.
 
-Transiciones de pedido: created → assigned → picked_up → in_transit → delivered; puede cancelarse desde created o assigned. Entrega: pending → assigned → in_transit → delivered. Una entrega actualiza el estado del pedido asociado. Los estados terminales no se reabren.
+Roles: admin, user, customer, driver y store. USER se conserva como rol permitido; CUSTOMER representa al cliente del dominio. La API impide asignar admin desde creación o actualización. Las contraseñas se guardan con scrypt y nunca se devuelven.
 
+El total se calcula con los items, sin aceptar importes enviados como total por el cliente. Tarifa de desarrollo/testing: 10. Producción: 50 + 1% del valor declarado. El stock determina available u out_of_stock.
 
-## Mocking
+Pedido: created → assigned → picked_up → in_transit → delivered; puede cancelarse desde created o assigned. Entrega: pending → assigned → in_transit → delivered. Solo un driver puede asignarse como repartidor. Con una entrega asociada, el estado del pedido se actualiza desde esa entrega. Los estados terminales no se reabren.
 
-GET `/api/mocks/users?qty=2` y `/api/mocks/drivers?qty=2` devuelven arrays sin guardar. GET `/api/mocks/orders?qty=2`, `/api/mocks/deliveries?qty=2` y `/api/mocks/all?qty=2` devuelven un conjunto con usuarios y relaciones consistentes; los IDs de referencias están presentes en ese conjunto. No se consulta MongoDB para generar estos datos.
+Cada pedido nuevo recibe un trackingCode SN- seguido de 32 caracteres hexadecimales y un historial de estados con fechas. Tracking devuelve únicamente código, estado e historial, sin usuarios, direcciones, items ni archivos. Repetir el mismo estado no agrega eventos duplicados. Los registros anteriores a esta funcionalidad pueden no tener código: no se modifican datos existentes automáticamente.
 
-POST `/api/mocks/seed?qty=10`, con body JSON `{ "resource":"users" }`, guarda 10 usuarios y devuelve `insertados`, `coleccion` y los conteos por entidad. `resource` puede ser users, drivers, orders, deliveries o all; por defecto users. Orders genera también clientes; deliveries/all genera clientes, repartidores, pedidos y entregas vinculados. `qty` va de 1 a 100; se rechazan negativos, fracciones y cantidades excesivas. Las contraseñas de carga se generan y se guardan con hash; los previews no contienen contraseñas.
+### Ejemplo de flujo
 
-La carga usa MongoDB real y compensación de los registros propios ante fallos de inserción. No es una transacción entre colecciones: ante una caída de MongoDB durante la compensación, se debe revisar la carga. Usá una base descartable para seeds.
+1. Crear un cliente con POST `/api/users`:
 
-## Errores centralizados
+```json
+{"firstName":"Ana","lastName":"Pérez","email":"ana@example.test","password":"ejemplo123","role":"customer"}
+```
 
-Services lanzan `AppError`; controllers llaman `next(error)` y el middleware global es el único que construye errores HTTP. `src/errors/catalog.js` contiene códigos, mensajes y status. Formato: `{ "status":"error", "error":{ "code":"ORDER_NOT_FOUND", "message":"Pedido no encontrado" } }`.
+2. Crear un repartidor con los mismos campos, otro email y role=driver.
+3. Crear un envío con POST `/api/shipments`:
 
-Probá `GET /api/orders/000000000000000000000000` (404), `GET /api/mocks/users?qty=-1` (400, INVALID_MOCK_QUANTITY), un ID mal formado (400, INVALID_ID), un estado desconocido (400, INVALID_STATE), JSON incorrecto (400, INVALID_JSON) y una ruta inexistente (404, ROUTE_NOT_FOUND). Duplicados devuelven 409; fallos de seed, 503. Los errores inesperados responden 500 sin exponer stacks ni detalles internos.
+```json
+{"customer":"ID_CLIENTE","deliveryAddress":"Av. Italia 1234","items":[{"name":"Caja","quantity":2,"price":100}]}
+```
 
-## Logging
+4. Crear la entrega con POST `/api/deliveries` y body `{"order":"ID_ENVIO","driver":"ID_REPARTIDOR"}`.
+5. Actualizarla con PUT `/api/deliveries/:id`, primero `{"status":"in_transit"}` y después `{"status":"delivered"}`.
+6. Adjuntar el comprobante y consultar `/api/tracking/CODIGO_DEVUELTO_AL_CREAR`.
 
-Winston se configura una sola vez en `src/config/logger.js`. Niveles, de mayor a menor severidad: fatal, error, warning, info, http, debug. GET `/api/logger/test` emite los seis niveles; sus mensajes error/fatal son pruebas intencionales, no fallos del servidor.
+Swagger documenta los parámetros, bodies, respuestas y errores de cada ruta. Las respuestas de negocio usan `{"status":"success","payload":...}`. Health/readiness y los mocks tienen sus formatos propios documentados.
 
-`logs/error.log` recibe únicamente error y fatal; `logs/combined.log` registra los eventos desde LOG_LEVEL. Rotación por tamaño: 1 MiB para errores, 5 MiB para combined, máximo 5 archivos por transporte. Desarrollo usa consola y debug por defecto; test/producción solo archivos e info por defecto. LOG_DIR permite cambiar el destino. Los eventos contienen timestamp, nivel, mensaje y metadatos; no se registran bodies, contraseñas ni URIs. Los logs están ignorados en Git.
+## Mocks
 
-Para comprobarlo, ejecutá el endpoint y revisá ambos archivos. Los errores esperados se registran como warning y los inesperados como error; la conexión inicial fallida usa fatal. La configuración inválida se rechaza antes de crear la aplicación y el logger.
+GET `/api/mocks/users?qty=2` y `/api/mocks/drivers?qty=2` devuelven arrays sin persistir. GET `/api/mocks/orders`, `/api/mocks/deliveries` y `/api/mocks/all` devuelve un conjunto con usuarios, repartidores, pedidos y entregas relacionados. Las referencias apuntan a IDs incluidos en ese conjunto; no están guardados en MongoDB.
 
-## Swagger / OpenAPI
+POST `/api/mocks/seed?qty=10` con JSON `{"resource":"users"}` persiste datos. resource admite users, drivers, orders, deliveries o all; por defecto users. qty admite enteros de 1 a 100. Orders carga también clientes; deliveries/all agrega repartidores y entregas. La respuesta informa insertados, coleccion y totales por entidad. Las contraseñas de seed se generan y hashean; los previews no contienen contraseñas.
 
-Documentación interactiva en `http://localhost:8080/api/docs/` (ajustá el puerto según PORT). Especificación JSON: `/api/docs/openapi.json`. Incluye Users, Products, Orders, Deliveries, Mocks, Logger y Health, con schemas reutilizables, parámetros, bodies, respuestas y errores. Swagger está separado de las rutas en `src/config/swagger.js` y `src/docs/openapi.json`.
+La generación no consulta la base. Seed sí usa MongoDB real y compensa únicamente los registros de esa carga si falla. Usá una base descartable. Los IDs de un preview no sirven para operar en la API hasta persistirlos o crear entidades reales.
 
-Para probar el flujo, creá un cliente y un repartidor con `/api/users`, un pedido con el ID del cliente y una entrega con los IDs del pedido y repartidor. Los IDs de los previews de mocks no están guardados: usá seed o POST de negocio antes de referenciarlos en la API real. No se documenta autenticación porque no está implementada.
+## Errores y logging
 
-## Testing funcional
+Services lanzan AppError, controllers derivan con next y el middleware global construye la respuesta uniforme:
 
-Herramientas: Mocha, Chai y Supertest. Ejecutá `cp .env.test.example .env.test` y `npm test`. La suite inicia un proceso MongoDB real, temporal e independiente con `mongodb-memory-server-core`; guarda datos en disco temporal y elimina la base/proceso al terminar. No usa una base de desarrollo ni una simulación de persistencia. La primera ejecución necesita descargar MongoDB 7.0.24; alternativamente configurá MONGODB_BINARY con la ruta de un mongod local compatible.
+```json
+{"status":"error","error":{"code":"ORDER_NOT_FOUND","message":"Pedido no encontrado"}}
+```
 
-Variables propias: PORT=8081, NODE_ENV=test, MONGODB_URI de ejemplo para validar configuración, LOG_LEVEL y LOG_DIR; el runner conecta exclusivamente con la URI del MongoDB temporal. El script fija NODE_ENV=test. No se leen datos cargados manualmente. Hooks limpian colecciones antes de cada test y eliminan la base al finalizar, con comprobación de nombre aleatorio propio de la suite. Los tests se agrupan en `tests/` por recurso.
+El catálogo está en `src/errors/catalog.js`. Incluye IDs/datos/estados inválidos (400), recursos inexistentes (404), conflictos (409), tamaño excedido (413), fallos de seed o readiness (503) y errores internos (500). Los errores inesperados no exponen stacks ni detalles internos. Ejemplos: `/api/mocks/users?qty=-1`, `/api/orders/000000000000000000000000` y una ruta inexistente.
 
-Cubre usuarios, productos, pedidos, entregas, transiciones, mocks (preview/seed), fallos de persistencia simulados, logger, Swagger, health check, configuración y errores de HTTP. Se verifican status, body, códigos, mensajes y efectos persistidos. La prueba de fallo del repositorio usa un sustituto explícito; las pruebas HTTP de seed y negocio utilizan MongoDB real. Para comprobar repetibilidad: `npm test && npm test`.
+Winston usa fatal, error, warning, info, http y debug. `logs/error.log` recibe solo error/fatal; `logs/combined.log` registra desde LOG_LEVEL. Hay rotación por tamaño y retención limitada por LOG_MAX_BYTES/LOG_MAX_FILES. Desarrollo incluye consola; producción solo archivos. No se registran bodies, contraseñas ni URIs.
+
+GET `/api/logger/test` genera los seis niveles. Sus eventos error/fatal son intencionales para validar el logger. Los errores esperados usan warning, los inesperados error y un fallo inicial de conexión fatal.
 
 ## Documentos y comprobantes
 
-Multer se configura en `src/config/multer.js`: un archivo en el campo **file**, PDF/PNG/JPEG, extensión coherente con MIME y firma inicial del contenido. Máximo **2 MiB** por defecto, configurable con UPLOAD_MAX_BYTES (hasta 10 MiB). No se trata de un antivirus ni de validación completa del documento. El directorio UPLOAD_DIR contiene subcarpetas para documentos, licencias y comprobantes; los nombres se generan con UUID.
+Multer está separado de los routers. Acepta un único archivo en el campo **file**: PDF, PNG o JPEG, con extensión/MIME coherentes y firma inicial válida. Tamaño máximo por defecto: **2 MiB**. La firma no sustituye un antivirus ni una validación completa del documento.
 
-- POST `/api/users/:id/documents`: multipart/form-data con file y documentType=user_document o driver_license. La licencia exige rol driver.
-- POST `/api/orders/:id/proofs` y `/api/deliveries/:id/proofs`: multipart/form-data con file. Tipo fijo delivery_proof.
-- GET sobre esas mismas rutas: lista metadatos.
-- GET sobre esas rutas con `/:documentId/file`: recupera los bytes del archivo asociado.
+| Operación | Ruta y campos |
+|---|---|
+| Documento de usuario | POST /api/users/:id/documents; file + documentType=user_document o driver_license |
+| Comprobante de pedido/envío | POST /api/orders/:id/proofs o /api/shipments/:id/proofs; file |
+| Comprobante de entrega | POST /api/deliveries/:id/proofs; file |
+| Listar metadatos | GET sobre las mismas rutas |
+| Recuperar archivo | GET sobre esas rutas con /:documentId/file |
 
-Ejemplo: `curl -F 'documentType=user_document' -F 'file=@documento.pdf' http://localhost:8080/api/users/ID_USUARIO/documents`.
+Las licencias requieren un usuario driver. Los comprobantes usan delivery_proof. Ejemplo:
 
-MongoDB guarda nombre original, nombre generado, ruta relativa, MIME, tamaño, tipo de documento y fecha. La API verifica que la entidad exista y elimina el archivo si fallan las validaciones o el guardado. No se expone toda la carpeta mediante archivos estáticos. Uploads y logs están ignorados por Git; no se entregan archivos de prueba. Son almacenamiento local de desarrollo: en producción requieren una política de respaldo/retención y autorización.
+```bash
+curl -F 'documentType=user_document' -F 'file=@documento.pdf' \
+  http://localhost:8080/api/users/ID_USUARIO/documents
+```
 
-Los tests incluyen cargas válidas, recuperación y asociación persistida, archivo faltante, MIME/extensión no permitidos, contenido incompatible, tamaño excedido, campo incorrecto, tipo de documento inválido y entidad inexistente. Los uploads de la suite se crean en `.cache/test-uploads` y se eliminan mediante hooks. Swagger documenta estos endpoints como multipart/form-data.
+El archivo recibe un nombre UUID y se guarda en subcarpetas de uploads. MongoDB guarda solo nombre original, nombre generado, ruta relativa, MIME, tamaño, tipo y fecha. El servicio verifica la entidad y limpia el archivo ante errores de validación o persistencia. No se expone estáticamente toda la carpeta. Las entidades con archivos no se eliminan para evitar huérfanos.
 
-Las entidades con documentos/comprobantes no se eliminan para evitar referencias huérfanas. Un pedido con entrega asociada cambia de estado desde esa entrega. La asignación de un driver a una entrega pendiente la pasa a assigned; no puede reasignarse una entrega completada.
+Logs, uploads, cachés y archivos de pruebas están ignorados en Git. En Docker se usan volúmenes; para un despliegue real debe definirse respaldo, retención y almacenamiento compartido antes de escalar horizontalmente.
 
-## Verificación del repositorio
+## Testing
 
-`npm run check` verifica la sintaxis; `npm run audit` revisa los archivos versionados y detecta material privado y patrones habituales de credenciales. No reemplaza una auditoría de seguridad completa. `npm test` ejecuta las pruebas funcionales con MongoDB temporal.
+```bash
+cp .env.test.example .env.test
+npm test
+```
 
-El proyecto conserva su evolución en las etiquetas preentrega-1 a preentrega-7. La rama main contiene la versión integrada y sus correcciones; los checkpoints anteriores muestran el alcance de cada módulo. La preentrega 8 incorpora configuración productiva y contenedores.
+La suite usa Mocha, Chai y Supertest. Inicia un proceso **MongoDB real temporal**, con una base de nombre aleatorio propia de la suite. No conecta a la base de desarrollo: MONGODB_URI de testing sirve para validar configuración y el runner usa la URI del proceso temporal. La primera ejecución descarga MongoDB 7.0.24; MONGODB_BINARY permite usar un binario local compatible.
 
-## Producción y Docker
+Los tests están agrupados por recurso en tests/. Hooks limpian las colecciones antes de cada test y eliminan base/proceso al finalizar. Los uploads de prueba usan exclusivamente `.cache/test-uploads`, con comprobaciones para evitar limpiar una carpeta ajena. No dependen de datos cargados manualmente ni del orden de ejecución.
 
-La configuración sigue centralizada y se valida antes de iniciar. `.env.production.example` documenta los valores de producción; no se usa JWT ni hay servicios externos que requieran URLs o secretos propios. API_BASE_URL configura el servidor mostrado en Swagger. En producción LOG_LEVEL solo permite info, warning, error o fatal; no hay salida por consola.
+Se cubren usuarios, productos, pedidos/envíos, entregas, transiciones, tracking, mocks/seed, health/readiness, Swagger, logger, rotación y archivos. Se verifican status, body, códigos, mensajes, relaciones y persistencia. Los fallos de dependencias se simulan de forma explícita y se restauran después del caso; los flujos de negocio/seed utilizan MongoDB real.
 
-ENABLE_INTERNAL_ENDPOINTS=false por defecto en producción: mocks y logger de prueba devuelven el 404 uniforme. En desarrollo/testing están habilitados. Swagger se conserva para revisión con ENABLE_SWAGGER=true; puede deshabilitarse explícitamente. No hay autenticación implementada: esta configuración es para un entorno controlado, no para publicar una API de escritura sin autorización.
+```bash
+npm test && npm test   # Repetibilidad sin limpieza manual
+npm run check         # Sintaxis de src, tests y scripts
+npm run audit         # Archivos versionados y patrones comunes de secretos
+```
 
-GET `/api/health` devuelve status, environment, uptime y timestamp. GET `/api/ready` también comprueba MongoDB; devuelve 503 si no está disponible. No se exponen credenciales ni datos de conexión. JSON_LIMIT_BYTES limita los cuerpos JSON (100 KiB por defecto); REQUEST_TIMEOUT_MS limita la recepción de requests. Los listados tienen paginación con máximo 100 resultados y desplazamiento máximo 100000; excluyen los metadatos de archivos para reducir payloads. Las consultas más usadas tienen índices.
+La auditoría del repositorio no reemplaza una auditoría de seguridad completa.
 
-Construcción: `docker build -t shipnow:local .`.
+## Docker y producción
 
-Ejecución con MongoDB accesible desde Docker: `docker run --rm --env-file .env.production -p 8080:8080 -v shipnow-uploads:/app/uploads -v shipnow-logs:/app/logs shipnow:local`. Antes copiá `.env.production.example` a `.env.production` y ajustá MONGODB_URI; desde un contenedor localhost es el propio contenedor. Para una base en tu Mac podés usar host.docker.internal. Los volúmenes conservan archivos/logs al recrear el contenedor.
+El Dockerfile usa Node.js 24, dos etapas, `npm ci --omit=dev --ignore-scripts`, usuario node y un healthcheck que consulta `/api/ready`. La imagen solo recibe dependencias productivas, src y el script de healthcheck. `.dockerignore` excluye variables reales, node_modules, Git, logs, uploads, coverage, cachés, temporales y material privado.
 
-La imagen usa Node.js 24, dos etapas, `npm ci --omit=dev`, usuario node y healthcheck de readiness. Se copian solo dependencias productivas, código y el healthcheck. `.dockerignore` excluye variables reales, node_modules, Git, logs, uploads, coverage, cachés, temporales y material privado. No se copian tests ni documentación privada a la imagen.
+### API y MongoDB con Compose
 
-### Docker Compose: API + MongoDB
+```bash
+docker compose up --build -d --wait
+# Alternativa clásica, si está disponible: docker-compose up --build
+```
 
-Ejecutá `docker compose up --build -d --wait` desde la raíz del proyecto. También podés usar `docker-compose up --build` si tu instalación conserva el comando clásico. La API escucha en http://localhost:8080 y Swagger en http://localhost:8080/api/docs/ . Compose no publica el puerto de MongoDB; la API se conecta a mongo:27017 en la red interna y espera su healthcheck. El healthcheck de la API consulta `/api/ready`.
+API: http://localhost:8080 . Swagger: http://localhost:8080/api/docs/ . Compose espera el healthcheck de MongoDB antes de iniciar la API y luego comprueba su readiness. MongoDB no publica un puerto al host. La API solo se publica en loopback para revisión local.
 
-Los volúmenes mongo-data, api-logs y api-uploads conservan base, logs y archivos al recrear contenedores. `docker compose down` detiene y elimina los contenedores sin borrar esos volúmenes. Para eliminar datos descartables de pruebas podés usar `docker compose down --volumes`; no lo uses sobre datos que quieras conservar. `docker compose logs api` muestra stdout del arranque; los eventos Winston de producción están en el volumen de logs y se consultan con `docker compose exec api sh -c 'tail -n 50 logs/combined.log'`.
+Compose fija production, LOG_LEVEL=info y endpoints internos desactivados. PORT cambia el puerto del host; el contenedor mantiene 8080. API_BASE_URL configura la URL de Swagger. Los volúmenes mongo-data, api-logs y api-uploads conservan base, logs y archivos al recrear contenedores.
 
-Compose fija producción, logs info y endpoints internos desactivados. PORT permite cambiar el puerto del host; el contenedor mantiene 8080. API_BASE_URL debe coincidir con la URL desde donde probarás Swagger. No incluye credenciales de MongoDB: este Compose se usa para revisión local, publica la API solo en loopback y mantiene la base dentro de su red. Para un despliegue público se deben incorporar autenticación, TLS, autorización y credenciales administradas fuera del repositorio.
+```bash
+docker compose ps
+docker compose exec api sh -c 'tail -n 50 logs/combined.log'
+docker compose down
+```
 
-El workflow ShipNow CI corre la suite funcional dos veces y construye/levanta los contenedores en un runner descartable. `node scripts/smoke-container.js` valida health, readiness, Swagger, restricciones productivas, un flujo persistido y el contenido/usuario de la imagen con Compose ya iniciado.
+`down` conserva los volúmenes. `docker compose down --volumes` elimina los datos: usalo únicamente con información descartable.
+
+### Solo la imagen de la API
+
+```bash
+docker build -t shipnow:local .
+cp .env.production.example .env.production
+# Ajustar MONGODB_URI para que sea accesible desde Docker.
+docker run --rm --env-file .env.production -p 127.0.0.1:8080:8080 \
+  -v shipnow-uploads:/app/uploads -v shipnow-logs:/app/logs shipnow:local
+```
+
+Dentro de un contenedor localhost apunta al propio contenedor. Para MongoDB en tu Mac puede usarse host.docker.internal; con Compose se usa mongo:27017.
+
+### Salud y endpoints internos
+
+GET `/api/health` informa status, environment, uptime y timestamp. GET `/api/ready` comprueba MongoDB y devuelve 503 si no está disponible. Ninguno expone credenciales.
+
+Mocks y logger de prueba están desactivados por defecto en producción; Swagger se mantiene para revisión y puede desactivarse con ENABLE_SWAGGER=false. JSON_LIMIT_BYTES, REQUEST_TIMEOUT_MS y los límites de archivos controlan recursos. La API cierra conexiones y MongoDB al recibir SIGINT/SIGTERM.
+
+### Validación automática
+
+El workflow ShipNow CI corre la suite dos veces y construye/inicia API + MongoDB en contenedores reales. `node scripts/smoke-container.js`, con Compose iniciado, comprueba salud, documentación, restricciones productivas, persistencia y el contenido/usuario de la imagen.
+
+## Alcance
+
+Proyecto académico ejecutable en un entorno controlado. No incorpora autenticación ni autorización completa; no debe exponerse como API pública de escritura sin agregarlas, junto con TLS y credenciales administradas. El Compose local no contiene credenciales de MongoDB y mantiene la base en su red interna.
+
+Los cambios entre pedido y entrega y la compensación de seed no son transacciones entre colecciones: no garantizan atomicidad ante caída abrupta de MongoDB. Los cambios de estado comparan el estado anterior para detectar conflictos. Para garantías completas se requiere una estrategia transaccional y una topología MongoDB apropiada.
+
+Las etiquetas preentrega-1 a preentrega-8 y proyecto-final conservan checkpoints del curso. La rama main contiene la versión integrada y las correcciones posteriores.
