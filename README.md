@@ -84,3 +84,9 @@ MongoDB guarda nombre original, nombre generado, ruta relativa, MIME, tamaño, t
 Los tests incluyen cargas válidas, recuperación y asociación persistida, archivo faltante, MIME/extensión no permitidos, contenido incompatible, tamaño excedido, campo incorrecto, tipo de documento inválido y entidad inexistente. Los uploads de la suite se crean en `.cache/test-uploads` y se eliminan mediante hooks. Swagger documenta estos endpoints como multipart/form-data.
 
 Las entidades con documentos/comprobantes no se eliminan para evitar referencias huérfanas. Un pedido con entrega asociada cambia de estado desde esa entrega. La asignación de un driver a una entrega pendiente la pasa a assigned; no puede reasignarse una entrega completada.
+
+## Verificación del repositorio
+
+`npm run check` verifica la sintaxis; `npm run audit` revisa los archivos versionados y detecta material privado y patrones habituales de credenciales. No reemplaza una auditoría de seguridad completa. `npm test` ejecuta las pruebas funcionales con MongoDB temporal.
+
+El proyecto conserva su evolución en las etiquetas preentrega-1 a preentrega-7. La rama main contiene la versión integrada y sus correcciones; los checkpoints anteriores muestran el alcance de cada módulo. La preentrega 8 y la entrega final no forman parte de esta versión.

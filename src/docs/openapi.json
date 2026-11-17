@@ -175,16 +175,6 @@
               }
             }
           },
-          "404": {
-            "description": "Recurso no encontrado",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
           "409": {
             "description": "Conflicto o duplicado",
             "content": {
@@ -265,16 +255,6 @@
           },
           "404": {
             "description": "Recurso no encontrado",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflicto o duplicado",
             "content": {
               "application/json": {
                 "schema": {
@@ -395,6 +375,16 @@
           },
           "500": {
             "description": "Error interno sin detalles sensibles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No se puede asignar el rol admin",
             "content": {
               "application/json": {
                 "schema": {
@@ -622,36 +612,6 @@
               }
             }
           },
-          "403": {
-            "description": "Asignación de admin no permitida",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Recurso no encontrado",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflicto o duplicado",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
           "500": {
             "description": "Error interno sin detalles sensibles",
             "content": {
@@ -722,16 +682,6 @@
           },
           "404": {
             "description": "Recurso no encontrado",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflicto o duplicado",
             "content": {
               "application/json": {
                 "schema": {
@@ -827,16 +777,6 @@
               }
             }
           },
-          "409": {
-            "description": "Conflicto o duplicado",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
           "500": {
             "description": "Error interno sin detalles sensibles",
             "content": {
@@ -893,16 +833,6 @@
           },
           "404": {
             "description": "Recurso no encontrado",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflicto o duplicado",
             "content": {
               "application/json": {
                 "schema": {
@@ -1070,28 +1000,8 @@
               }
             }
           },
-          "403": {
-            "description": "Asignación de admin no permitida",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
           "404": {
             "description": "Recurso no encontrado",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflicto o duplicado",
             "content": {
               "application/json": {
                 "schema": {
@@ -1170,16 +1080,6 @@
           },
           "404": {
             "description": "Recurso no encontrado",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflicto o duplicado",
             "content": {
               "application/json": {
                 "schema": {
@@ -1278,16 +1178,6 @@
           },
           "404": {
             "description": "Recurso no encontrado",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflicto o duplicado",
             "content": {
               "application/json": {
                 "schema": {
@@ -1514,16 +1404,6 @@
               }
             }
           },
-          "403": {
-            "description": "Asignación de admin no permitida",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
           "404": {
             "description": "Recurso no encontrado",
             "content": {
@@ -1622,16 +1502,6 @@
               }
             }
           },
-          "409": {
-            "description": "Conflicto o duplicado",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
           "500": {
             "description": "Error interno sin detalles sensibles",
             "content": {
@@ -1714,16 +1584,6 @@
           },
           "404": {
             "description": "Recurso no encontrado",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflicto o duplicado",
             "content": {
               "application/json": {
                 "schema": {

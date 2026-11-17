@@ -15,4 +15,4 @@ const upload=multer({storage,limits:{fileSize:config.uploadMaxBytes,files:1,fiel
  if(!expected || !(extension===expected || file.mimetype==='image/jpeg'&&extension==='.jpeg')) return callback(new AppError('INVALID_FILE_TYPE'));
  callback(null,true);
 }}).single('file');
-export const receiveFile=(req,res,next)=>upload(req,res,error=>next(error));
+export const receiveFile=(req,res,next)=>upload(req,res,error=>next(error && error.name!=='MulterError' && !(error instanceof AppError) ? new AppError('FILE_SAVE_ERROR') : error));
