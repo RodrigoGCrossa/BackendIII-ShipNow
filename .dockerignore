@@ -2,12 +2,19 @@ node_modules
 **/node_modules
 .env
 .env.*
+**/.env
+**/.env.*
 .git
+**/.git
 .github
 logs
+**/logs
 uploads
+**/uploads
 coverage
+**/coverage
 .cache
+**/.cache
 **/*.log
 **/*.tmp
 **/*.swp
@@ -17,5 +24,3 @@ ENTREGAS.md
 seguimiento
 consignas
 *.pdf
-!src/**
-!scripts/healthcheck.js

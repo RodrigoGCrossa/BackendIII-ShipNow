@@ -37,6 +37,8 @@ jobs:
           node-version: '24'
       - name: Validar Compose
         run: docker compose config --quiet
+      - name: Verificar exclusiones del contexto Docker
+        run: node scripts/check-docker-context.js
       - name: Construir e iniciar servicios saludables
         run: docker compose up --build -d --wait --wait-timeout 180
       - name: Verificar imagen y API productiva

@@ -216,9 +216,21 @@ GET `/api/health` informa status, environment, uptime y timestamp. GET `/api/rea
 
 Mocks y logger de prueba están desactivados por defecto en producción; Swagger se mantiene para revisión y puede desactivarse con ENABLE_SWAGGER=false. JSON_LIMIT_BYTES, REQUEST_TIMEOUT_MS y los límites de archivos controlan recursos. La API cierra conexiones y MongoDB al recibir SIGINT/SIGTERM.
 
+El criterio aplicado a cada herramienta interna es el siguiente:
+
+| Herramienta | Producción | Motivo y configuración |
+|---|---|---|
+| Mocks y seed (`/api/mocks`) | Desactivados; responden 404 con el formato global de errores. | Son herramientas de desarrollo; seed puede insertar datos artificiales. Solo se habilitan expresamente con ENABLE_INTERNAL_ENDPOINTS=true en un entorno de confianza. Compose fija false. |
+| Prueba del logger (`/api/logger/test`) | Desactivada; responde 404 con el formato global. | Evita generar registros artificiales, incluidos error/fatal, durante la operación normal. Comparte ENABLE_INTERNAL_ENDPOINTS con mocks. |
+| Swagger UI y JSON (`/api/docs`) | Habilitados para revisión local/controlada. | Permiten consultar y probar la API durante la evaluación. No constituyen una restricción de acceso ni sustituyen autorización. ENABLE_SWAGGER=false desactiva tanto la interfaz como la especificación JSON. |
+
+En desarrollo y testing, las herramientas internas se habilitan por defecto. Estas decisiones se aplican al registrar los routers en `src/app.js`; no dependen solo de una indicación en la documentación. Cambiar las variables requiere reiniciar la aplicación.
+
 ### Validación automática
 
 El workflow ShipNow CI corre la suite dos veces y construye/inicia API + MongoDB en contenedores reales. `node scripts/smoke-container.js`, con Compose iniciado, comprueba salud, documentación, restricciones productivas, persistencia y el contenido/usuario de la imagen.
+
+`node scripts/check-docker-context.js` comprueba `.dockerignore` mediante una construcción independiente: crea archivos señuelo sin credenciales en la raíz y dentro de src, verifica que las variables locales y los archivos generados no lleguen al contexto copiado, y elimina los señuelos al terminar. También comprueba que el código fuente y el healthcheck necesarios sigan disponibles.
 
 ## Alcance
 
