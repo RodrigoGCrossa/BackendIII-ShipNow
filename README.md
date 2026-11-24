@@ -86,6 +86,8 @@ El total se calcula con los items, sin aceptar importes enviados como total por 
 
 Pedido: created → assigned → picked_up → in_transit → delivered; puede cancelarse desde created o assigned. Entrega: pending → assigned → in_transit → delivered. Solo un driver puede asignarse como repartidor. Con una entrega asociada, el estado del pedido se actualiza desde esa entrega. Los estados terminales no se reabren.
 
+Asignar un repartidor a una entrega pendiente la pasa a assigned; enviar un repartidor junto con status=pending se rechaza por inconsistencia. Al eliminar una entrega, primero se comprueba que no haya cambiado; solo si la eliminación funciona se desvincula el pedido. Si falla esa segunda operación se intenta restaurar la entrega. Esta compensación cubre errores controlados, pero no sustituye una transacción ante una caída abrupta de la base.
+
 Cada pedido nuevo recibe un trackingCode SN- seguido de 32 caracteres hexadecimales y un historial de estados con fechas. Tracking devuelve únicamente código, estado e historial, sin usuarios, direcciones, items ni archivos. Repetir el mismo estado no agrega eventos duplicados. Los registros anteriores a esta funcionalidad pueden no tener código: no se modifican datos existentes automáticamente.
 
 ### Ejemplo de flujo
@@ -127,6 +129,8 @@ Services lanzan AppError, controllers derivan con next y el middleware global co
 
 El catálogo está en `src/errors/catalog.js`. Incluye IDs/datos/estados inválidos (400), recursos inexistentes (404), conflictos (409), tamaño excedido (413), fallos de seed o readiness (503) y errores internos (500). Los errores inesperados no exponen stacks ni detalles internos. Ejemplos: `/api/mocks/users?qty=-1`, `/api/orders/000000000000000000000000` y una ruta inexistente.
 
+Los errores siempre usan Content-Type application/json, incluso cuando falla una descarga cuyo archivo físico ya no está disponible. Las rutas con codificación inválida devuelven 400 con el mismo formato.
+
 Winston usa fatal, error, warning, info, http y debug. `logs/error.log` recibe solo error/fatal; `logs/combined.log` registra desde LOG_LEVEL. Hay rotación por tamaño y retención limitada por LOG_MAX_BYTES/LOG_MAX_FILES. Desarrollo incluye consola; producción solo archivos. No se registran bodies, contraseñas ni URIs.
 
 GET `/api/logger/test` genera los seis niveles. Sus eventos error/fatal son intencionales para validar el logger. Los errores esperados usan warning, los inesperados error y un fallo inicial de conexión fatal.
@@ -166,6 +170,8 @@ La suite usa Mocha, Chai y Supertest. Inicia un proceso **MongoDB real temporal*
 Los tests están agrupados por recurso en tests/. Hooks limpian las colecciones antes de cada test y eliminan base/proceso al finalizar. Los uploads de prueba usan exclusivamente `.cache/test-uploads`, con comprobaciones para evitar limpiar una carpeta ajena. No dependen de datos cargados manualmente ni del orden de ejecución.
 
 Se cubren usuarios, productos, pedidos/envíos, entregas, transiciones, tracking, mocks/seed, health/readiness, Swagger, logger, rotación y archivos. Se verifican status, body, códigos, mensajes, relaciones y persistencia. Los fallos de dependencias se simulan de forma explícita y se restauran después del caso; los flujos de negocio/seed utilizan MongoDB real.
+
+La suite también verifica los límites entre capas y contrasta respuestas reales con los schemas y códigos HTTP declarados en OpenAPI. Las regresiones incluyen descarga sin archivo físico, fallos al eliminar/desvincular entregas y compensación de un seed parcialmente insertado conservando los datos anteriores.
 
 ```bash
 npm test && npm test   # Repetibilidad sin limpieza manual

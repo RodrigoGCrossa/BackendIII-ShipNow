@@ -69,6 +69,7 @@ export default class DeliveryService {
     }
     if ('status' in data) {
       clean.status = enumValue(data.status, DELIVERY_STATUS, 'status');
+      if (clean.status === DELIVERY_STATUS.PENDING && (clean.driver || current.driver)) fail('INVALID_STATE', 'Una entrega con repartidor no puede permanecer pendiente');
       if (clean.status !== current.status && !transitions[current.status].includes(clean.status)) fail('INVALID_STATE', 'Transición de estado inválida');
       if (clean.status !== DELIVERY_STATUS.PENDING && !clean.driver && !current.driver) fail('INVALID_STATE', 'Debe asignarse un repartidor');
       if (clean.status === DELIVERY_STATUS.DELIVERED && current.status !== DELIVERY_STATUS.DELIVERED) clean.deliveredAt = new Date();
@@ -97,8 +98,22 @@ export default class DeliveryService {
     if (current.proofs?.length) fail('CONFLICT', 'La entrega tiene comprobantes asociados');
     if (current.status === DELIVERY_STATUS.DELIVERED) fail('INVALID_STATE', 'No se puede eliminar una entrega completada');
     const order = await new OrderService().getById(String(current.order));
-    const unlinked = await new OrderRepository().updateWithHistory(current.order, { delivery: null, status: ORDER_STATUS.CREATED }, order.status);
-    if (!unlinked) fail('CONFLICT', 'El pedido cambió mientras se eliminaba la entrega');
-    return this.repository.delete(value);
+    if (String(order.delivery) !== String(current._id)) fail('CONFLICT', 'La entrega no está vinculada al pedido');
+    const expected = { status: current.status };
+    if (current.updatedAt) expected.updatedAt = current.updatedAt;
+    const removed = await this.repository.delete(value, expected);
+    if (!removed) fail('CONFLICT', 'La entrega cambió mientras se eliminaba');
+    try {
+      const unlinked = await new OrderRepository().updateWithHistory(current.order, { delivery: null, status: ORDER_STATUS.CREATED }, order.status);
+      if (!unlinked) fail('CONFLICT', 'El pedido cambió mientras se eliminaba la entrega');
+    } catch (error) {
+      try { await this.repository.create(removed); }
+      catch (restoreError) {
+        logger.error('No se pudo restaurar una entrega tras fallar su desvinculación', { deliveryId: value, name: restoreError.name });
+      }
+      throw error;
+    }
+    logger.info('Entrega eliminada', { event: 'delivery_deleted', id: value });
+    return removed;
   }
 }
